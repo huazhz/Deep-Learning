@@ -64,8 +64,18 @@
 
 
 ## Part3_high-level_API
-### 0600——tf.contrib.learnQuickstart
+### 0600_tf.contrib.learnQuickstart
 
 - 0100_NN
 
 	使用`tf.contrib.learn`API构建一个神经网络，分类iris数据
+
+### 0700_BuildingInputFunctions
+
+- 0100_HouseingPriceRegression
+
+    定义一个`input_fn`，并用lambda表达式传给`classifier.fit`，实现不同数据集共用一个函数
+
+**上面两个demo，一个是用`tf.contrib.learn.datasets.base.load_csv_with_header`导入数据，另一个是用`pandas.read_csv`导入数据**
+
+
