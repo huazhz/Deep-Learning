@@ -78,4 +78,17 @@
 
 **上面两个demo，一个是用`tf.contrib.learn.datasets.base.load_csv_with_header`导入数据，另一个是用`pandas.read_csv`导入数据**
 
+### 0800_LoggingandMonitoringBasics
 
+- 0100_NN
+
+    这个文件的原始版本与0600中的文件一样，是在此文件基础上的改动
+
+    ValidationMonitor的使用，主要包括：
+
+    1. 用ValidationMonitor每隔N步在测试集上验证一次准确率
+    2. ValidationMonitor的使用依赖于checkpoints,初始化classifier时用`config = tf.contrib.learn.RunConfig(save_checkpoints_secs=1)`配置tf每1秒保存一下checkpoints
+    3. 可以自定义log中显示的validation_metrics
+    4. 让训练提前终止
+
+    使用TensorBoard可视化保存的结果
