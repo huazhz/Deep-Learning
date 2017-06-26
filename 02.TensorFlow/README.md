@@ -6,6 +6,8 @@
 
 
 ## Part1_GetStart
+> TensorFlow的一些基本用法
+
 ### 0100_Install
 >	安装TensorFlow
 
@@ -40,6 +42,8 @@
 
 
 ## Part2_MNIST
+> 使用TensorFlow分类MNIST数据集
+
 ### 0300_MnistForBeginner
 
 - 0100_MNISTForBeginner
@@ -64,6 +68,8 @@
 
 
 ## Part3_high-level_API
+> TensorFlow high-level API的demo
+
 ### 0600_tf.contrib.learnQuickstart
 
 - 0100_NN
@@ -93,6 +99,9 @@
 
     使用TensorBoard可视化保存的结果
 
+## Part4_TensorBoard
+> 使用TensorBoard做一些可视化
+
 ### 0900_VisualizingLearning
 
 - `mnist_with_summaries.py`是一个使用TensorBoard的demo
@@ -100,4 +109,6 @@
 ### 1000_EmbeddingVisualization
 
 - 这个目前用不到
+
+
 
