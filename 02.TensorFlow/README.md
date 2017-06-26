@@ -92,3 +92,12 @@
     4. 让训练提前终止
 
     使用TensorBoard可视化保存的结果
+
+### 0900_VisualizingLearning
+
+- `mnist_with_summaries.py`是一个使用TensorBoard的demo
+
+### 1000_EmbeddingVisualization
+
+- 这个目前用不到
+
