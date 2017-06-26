@@ -114,3 +114,12 @@
 
 - 这里面主要讲了`TensorBoard`中`Graph`的一些用法，还是很有用的
 
+### 1200_HistogramDashboard
+
+- 0100_Histogram.py
+
+    使用`tf.summary.histogram`记录生成的高斯分布
+
+- 0200_MultiModel.py
+
+    把两个高斯分布合并并记录
