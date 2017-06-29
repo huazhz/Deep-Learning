@@ -124,6 +124,3 @@ def train(is_training, logits, images, labels):
         if step > 1 and step % 100 == 0:
             _, top1_error_value = sess.run([val_op, top1_error], { is_training: False })
             print('Validation top1 error %.2f' % top1_error_value)
-
-
-
