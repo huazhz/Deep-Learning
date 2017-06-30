@@ -1,4 +1,4 @@
-from resnet import * 
+from resnet import *
 import tensorflow as tf
 
 MOMENTUM = 0.9
@@ -82,9 +82,9 @@ def train(is_training, logits, images, labels):
     if FLAGS.resume:
         latest = tf.train.latest_checkpoint(FLAGS.train_dir)
         if not latest:
-            print "No checkpoint to continue from in", FLAGS.train_dir
+            print("No checkpoint to continue from in", FLAGS.train_dir)
             sys.exit(1)
-        print "resume", latest
+        print("resume", latest)
         saver.restore(sess, latest)
 
     for x in xrange(FLAGS.max_steps + 1):
