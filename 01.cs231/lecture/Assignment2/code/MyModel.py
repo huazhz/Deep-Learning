@@ -182,6 +182,8 @@ def train():
     # start training
 
     # shuffle indicies
+    saver = tf.train.Saver()
+
     train_indicies = np.arange(X_train.shape[0])
     np.random.shuffle(train_indicies)
 
@@ -208,12 +210,15 @@ def train():
 
                 train_writer.add_summary(summary, e*iter_per_epoch+i)
 
-    train_writer.close()
-    validation_writer.close()
+        saver.save(sess, save_path=FLAGS.log_dir+'/model', global_step=(e+1)*iter_per_epoch)
 
+    # test the model
+    acc = sess.run(accuracy, feed_dict={X:X_test, y:y_test, is_training:False})
+    print('Test Accuracy: %s' % (acc))
 
-
-
+    # 如果把这两个writer关上，在TensorBoard中显示不出来
+    # train_writer.close()
+    # validation_writer.close()
 
 def main(_):
     if tf.gfile.Exists(FLAGS.log_dir):
