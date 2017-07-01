@@ -142,6 +142,7 @@ def train():
       k = 1.0
     return {x: xs, y_: ys, keep_prob: k}
 
+  # start training
   for i in range(FLAGS.max_steps):
     if i % 10 == 0:  # Record summaries and test-set accuracy
       summary, acc = sess.run([merged, accuracy], feed_dict=feed_dict(False))
@@ -161,8 +162,8 @@ def train():
       else:  # Record a summary
         summary, _ = sess.run([merged, train_step], feed_dict=feed_dict(True))
         train_writer.add_summary(summary, i)
-  train_writer.close()
-  test_writer.close()
+  # train_writer.close()
+  # test_writer.close()
 
 
 def main(_):
@@ -192,7 +193,7 @@ if __name__ == '__main__':
   parser.add_argument(
       '--log_dir',
       type=str,
-      default='/tmp/tensorflow/mnist/logs/mnist_with_summaries',
+      default='/tmp/tensorflow/mnist',
       help='Summaries log directory')
   FLAGS, unparsed = parser.parse_known_args()
   tf.app.run(main=main, argv=[sys.argv[0]] + unparsed)

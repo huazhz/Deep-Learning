@@ -21,7 +21,7 @@ summaries = tf.summary.merge_all()
 
 # Setup a session and summary writer
 sess = tf.Session()
-writer = tf.summary.FileWriter("/tmp/histogram_example2")
+writer = tf.summary.FileWriter("/tmp/histogram_example2", sess.graph)
 
 # Setup a loop and write the summaries to disk
 N = 400
