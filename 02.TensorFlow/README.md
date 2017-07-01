@@ -123,3 +123,8 @@
 - 0200_MultiModel.py
 
     把两个高斯分布合并并记录
+
+## Part5_TFDetails
+> TensorFlow's Details
+
+### 1300_Variables
