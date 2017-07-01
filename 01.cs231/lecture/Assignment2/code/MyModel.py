@@ -1,8 +1,8 @@
 import tensorflow as tf
 import numpy as np
 import math
-import timeit
-import matplotlib.pyplot as plt
+import time
+
 
 import argparse
 import sys
@@ -159,7 +159,7 @@ def train():
     with tf.name_scope('train'):
         global_step = tf.Variable(0, trainable=False, name='global_step')
         learning_rate = tf.train.exponential_decay(FLAGS.start_learning_rate, global_step,
-                                                   1000, 0.96, staircase=True)
+                                                   100, 0.96, staircase=True)
         optimizer = tf.train.AdamOptimizer(learning_rate)
 
         # batch normalization in tensorflow requires this extra dependency
@@ -176,7 +176,7 @@ def train():
     # write summary to disk
     merged = tf.summary.merge_all()
     train_writer = tf.summary.FileWriter(FLAGS.log_dir + '/train', sess.graph)
-    validation_writer = tf.summary.FileWriter(FLAGS.log_dir + '/test')
+    validation_writer = tf.summary.FileWriter(FLAGS.log_dir + '/val')
     tf.global_variables_initializer().run()
 
     # start training
@@ -189,12 +189,13 @@ def train():
 
     iter_per_epoch = int(math.ceil(X_train.shape[0]/FLAGS.batch_size))
     for e in range(FLAGS.epochs):
+        start_time = time.time()
         for i in range(iter_per_epoch):
             # 每100次迭代，测试并记录模型在验证集上的准确率
             if i % 100 == 0:
                 summary, acc = sess.run([merged, accuracy], feed_dict={X:X_val, y:y_val, is_training:False})
-                validation_writer.add_summary(summary, e*iter_per_epoch+i)
-                print('Val Accuracy at step %s: %s' % (e*iter_per_epoch+i, acc))
+                validation_writer.add_summary(summary, global_step=e*iter_per_epoch+i)
+                print('Validation Accuracy at step %s: %s' % (e*iter_per_epoch+i, acc))
             else:
                 # generate indicies for the batch
                 # 取模是因为上面是上取整，有可能超出总样本数
@@ -208,8 +209,10 @@ def train():
                                is_training: True }
                 )
 
-                train_writer.add_summary(summary, e*iter_per_epoch+i)
+                train_writer.add_summary(summary, global_step=e*iter_per_epoch+i)
 
+        duration = time.time() - start_time
+        print('The time span of 1 epoch: %s' % (duration))
         saver.save(sess, save_path=FLAGS.log_dir+'/model', global_step=(e+1)*iter_per_epoch)
 
     # test the model
@@ -230,18 +233,18 @@ def main(_):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--epochs', type=int, default=1,
+    parser.add_argument('--epochs', type=int, default=10,
                         help='Number of epochs to run trainer.')
     parser.add_argument('--batch_size', type=int, default=64,
                         help='Number of batch size.')
     parser.add_argument('--start_learning_rate', type=float, default=0.001,
                         help='Initial learning rate')
-    parser.add_argument('--dropout', type=float, default=0.4,
+    parser.add_argument('--dropout', type=float, default=0.5,
                         help='Keep probability for training dropout.')
     parser.add_argument(
         '--log_dir',
         type=str,
-        default='/tmp/cs231n',
+        default='/tmp/cs231n/2',
         help='Summaries log directory')
     FLAGS, unparsed = parser.parse_known_args()
     tf.app.run(main=main, argv=[sys.argv[0]] + unparsed)
