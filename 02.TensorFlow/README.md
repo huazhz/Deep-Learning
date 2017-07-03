@@ -48,7 +48,7 @@
 
 - 0100_MNISTForBeginner
 
-	自定义一个线性模型，然后用`tf.nn.softmax`分类MNIST
+	自定义一个线性模型，然后用`tf.model.softmax`分类MNIST
 
 ### 0400_MnistForExpert
 

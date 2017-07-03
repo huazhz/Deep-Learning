@@ -8,7 +8,9 @@ IMAGE_WIDTH = 45
 IMAGE_HEIGHT = 31
 IMAGE_PIXELS = IMAGE_HEIGHT * IMAGE_WIDTH
 
-def inference(images_placeholder, is_training, depth1, depth2, depth3, dense1_units, dense2_units, dropout_rate):
+def inference(images_placeholder, is_training,
+              depth1, depth2, depth3, dense1_units, dense2_units,
+              dropout_rate=0.5):
     """
     Build the eeg model
 
@@ -25,6 +27,7 @@ def inference(images_placeholder, is_training, depth1, depth2, depth3, dense1_un
 
     # layer1:bn-conv-relu(depth1)-pool
     with tf.name_scope('conv1'):
+        print('images_placeholder.shape:', images_placeholder.shape)
         bn = tf.layers.batch_normalization(inputs=images_placeholder, training=training_mode)
         tf.summary.histogram('batch norm', bn)
 
@@ -157,7 +160,8 @@ def evaluation(logits, labels):
     # It returns a bool tensor with shape [batch_size] that is true for
     # the examples where the label is in the top k (here k=1)
     # of all logits for that example.
-    correct = tf.nn.in_top_k(logits, labels, 1)
+    labels = tf.to_int64(labels)
+    correct = tf.equal(tf.argmax(logits, 1), labels)
     accuracy = tf.reduce_mean(tf.cast(correct, tf.float32))
     tf.summary.scalar('accuracy', accuracy)
     # Return the number of true entries.

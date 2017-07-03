@@ -86,7 +86,7 @@ B5 = tf.Variable(tf.ones([Q])/10)
 # Correct usage of batch norm scale and offset parameters:
 # According to BN paper, offsets should be kept and biases removed.
 # In practice, it seems to work well with BN without offsets and traditional biases.
-# "When the next layer is linear (also e.g. `nn.relu`), scaling can be
+# "When the next layer is linear (also e.g. `model.relu`), scaling can be
 # disabled since the scaling can be done by the next layer."
 # So apparently no need of scaling before a RELU.
 # => Using neither scales not offsets with RELUs.

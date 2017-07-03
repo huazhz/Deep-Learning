@@ -102,7 +102,7 @@ def train():
     #
     # can be numerically unstable.
     #
-    # So here we use tf.nn.softmax_cross_entropy_with_logits on the
+    # So here we use tf.model.softmax_cross_entropy_with_logits on the
     # raw outputs of the nn_layer above, and then average across
     # the batch.
     diff = tf.nn.softmax_cross_entropy_with_logits(labels=y_, logits=y)

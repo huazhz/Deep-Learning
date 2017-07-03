@@ -1,24 +1,32 @@
 import argparse
-import os.path
+import math
 import sys
 import time
-import math
-import scipy.io as sio
+
 import numpy as np
-
-
+import scipy.io as sio
 import tensorflow as tf
-from . import eeg
+
+from model import eeg
 
 # Basic model parameters as external flags.
 FLAGS = None
 
 def loadEEGData():
-    dataPath = 'F:/Deep Learning/05.eeg/dataset/sz/'
+    dataPath = 'F:/Deep Learning/eeg/dataset/sz/'
     X_train = sio.loadmat(dataPath+'X_train.mat')['X_train']
     X_test = sio.loadmat(dataPath+'X_test.mat')['X_test']
     y_train = sio.loadmat(dataPath+'y_train.mat')['y_train']
     y_test = sio.loadmat(dataPath+'y_test.mat')['y_test']
+
+    # labels是从1到58，改成0到57
+    y_train = y_train - 1
+    y_test = y_test - 1
+
+    X_train = np.reshape(X_train, (-1, 45, 31, 1))
+    y_train = np.reshape(y_train, (-1,))
+    X_test = np.reshape(X_test, (-1, 45, 31, 1))
+    y_test = np.reshape(y_test, (-1,))
 
     return X_train, y_train, X_test, y_test
 
@@ -41,19 +49,21 @@ def loadEEGData():
 
 def run_training():
     X_train, y_train, X_test, y_test = loadEEGData()
-    images_placeholder = tf.placeholder(dtype=tf.float32, shape=[None, 45, 31, 1], name='X-input')
-    labels_placeholder = tf.placeholder(dtype=tf.int32, shape=[None, 1], name='y-input')
 
     with tf.Graph().as_default():
+        images_placeholder = tf.placeholder(dtype=tf.float32, shape=[None, 45, 31, 1], name='images-input')
+        labels_placeholder = tf.placeholder(dtype=tf.int32, shape=[None], name='y-input')
+        is_training = tf.placeholder(dtype=tf.bool)
+
         logits = eeg.inference(
-            images_placeholder,
-            is_training=True,
+            images_placeholder=images_placeholder,
+            is_training=is_training,
             depth1=FLAGS.depth1,
             depth2=FLAGS.depth2,
             depth3=FLAGS.depth3,
             dense1_units=FLAGS.dense1,
             dense2_units=FLAGS.dense2,
-            dropout=FLAGS.dropout)
+            dropout_rate=FLAGS.dropout)
 
         loss = eeg.loss(logits, labels_placeholder)
 
@@ -70,7 +80,7 @@ def run_training():
         init = tf.global_variables_initializer()
 
         train_writer = tf.summary.FileWriter(FLAGS.log_dir + '/train', sess.graph)
-        validation_writer = tf.summary.FileWriter(FLAGS.log_dir + '/val')
+        test_writer = tf.summary.FileWriter(FLAGS.log_dir + '/test')
 
         sess.run(init)
 
@@ -81,45 +91,40 @@ def run_training():
         iter_per_epoch = int(math.ceil(X_train.shape[0]/FLAGS.batch_size))
         for e in range(FLAGS.epochs):
             start_time = time.time()
+
             for i in range(iter_per_epoch):
-                # 每100次迭代，测试并记录模型在验证集上的准确率
-                if i % 100 == 0:
-                    summary, acc = sess.run([merged, accuracy],
-                                            feed_dict={images_placeholder:X_test, labels_placeholder:y_test})
-                    validation_writer.add_summary(summary, global_step=e*iter_per_epoch+i)
-                    print('Validation Accuracy at step %s: %s' % (e*iter_per_epoch+i, acc))
-                else:
-                    # generate indicies for the batch
-                    # 取模是因为上面是上取整，有可能超出总样本数
-                    start_idx = (i*FLAGS.batch_size)%X_train.shape[0]
-                    idx = train_indicies[start_idx:start_idx+FLAGS. batch_size]
 
-                    summary, _ = sess.run(
-                        [merged, train_step],
-                        feed_dict={X: X_train[idx,:],
-                                   y: y_train[idx],
-                                   is_training: True }
-                    )
+                # generate indicies for the batch
+                # 取模是因为上面是上取整，有可能超出总样本数
+                start_idx = (i*FLAGS.batch_size)%X_train.shape[0]
+                idx = train_indicies[start_idx:start_idx+FLAGS. batch_size]
 
-                    train_writer.add_summary(summary, global_step=e*iter_per_epoch+i)
+                summary, _ = sess.run(
+                    [merged, train_step],
+                    feed_dict={
+                        images_placeholder: X_train[idx,:],
+                        labels_placeholder: y_train[idx],
+                        is_training:True
+                    }
+                )
+
+                train_writer.add_summary(summary, global_step=e*iter_per_epoch+i)
+
+            summary, acc = sess.run([merged, accuracy],
+                                    feed_dict={
+                                        images_placeholder:X_test,
+                                        labels_placeholder:y_test,
+                                        is_training: False
+                                    })
+            test_writer.add_summary(summary, global_step=e*iter_per_epoch)
+            print('Test accuracy at epoch %s: %s' % (e, acc))
 
             duration = time.time() - start_time
             print('The time span of 1 epoch: %s' % (duration))
             saver.save(sess, save_path=FLAGS.log_dir+'/model', global_step=(e+1)*iter_per_epoch)
 
-        # test the model
-        acc = sess.run(accuracy, feed_dict={X:X_test, y:y_test, is_training:False})
-        print('Test Accuracy: %s' % (acc))
-
         train_writer.close()
-        validation_writer.close()
-
-
-
-# start training
-
-saver = tf.train.Saver()
-
+        test_writer.close()
 
 
 def main(_):
@@ -140,13 +145,13 @@ if __name__ == '__main__':
     parser.add_argument(
         '--epochs',
         type=int,
-        default=10,
+        default=20,
         help='Number of epochs to run trainer.'
     )
     parser.add_argument(
         '--batch_size',
         type=int,
-        default=10,
+        default=50,
         help='Number of batch size.'
     )
     parser.add_argument(
@@ -162,7 +167,7 @@ if __name__ == '__main__':
         help='The depth of second conv layer.'
     )
     parser.add_argument(
-        '--depth1',
+        '--depth3',
         type=int,
         default=64,
         help='The depth of third conv layer.'
@@ -178,12 +183,6 @@ if __name__ == '__main__':
         type=int,
         default=58,
         help='Number of units in hidden layer 2.'
-    )
-    parser.add_argument(
-        '--batch_size',
-        type=int,
-        default=100,
-        help='Batch size.  Must divide evenly into the dataset sizes.'
     )
     parser.add_argument(
         '--dropout',
