@@ -59,7 +59,17 @@ def run_training():
         labels_placeholder = tf.placeholder(dtype=tf.int32, shape=[None], name='y-input')
         is_training = tf.placeholder(dtype=tf.bool)
 
-        logits = eeg.inference(
+        # logits = eeg.inference(
+        #     images_placeholder=images_placeholder,
+        #     is_training=is_training,
+        #     depth1=FLAGS.depth1,
+        #     depth2=FLAGS.depth2,
+        #     depth3=FLAGS.depth3,
+        #     dense1_units=FLAGS.dense1,
+        #     dense2_units=FLAGS.dense2,
+        #     dropout_rate=FLAGS.dropout)
+
+        logits = eeg.inference_large(
             images_placeholder=images_placeholder,
             is_training=is_training,
             depth1=FLAGS.depth1,
@@ -155,7 +165,7 @@ if __name__ == '__main__':
     parser.add_argument(
         '--learning_rate_decay',
         type=float,
-        default=0.83,
+        default=0.86,
         help='Exponential decay learning rate.'
     )
     parser.add_argument(
@@ -209,7 +219,7 @@ if __name__ == '__main__':
     parser.add_argument(
         '--log_dir',
         type=str,
-        default='d:/tmp/eeg_dp0.6_nm_decay0.83',
+        default='d:/tmp/eeg_large',
         help='Directory to put the log data.'
     )
 
