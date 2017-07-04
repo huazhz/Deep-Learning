@@ -28,6 +28,10 @@ def loadEEGData():
     X_test = np.reshape(X_test, (-1, 45, 31, 1))
     y_test = np.reshape(y_test, (-1,))
 
+    mean_image = np.mean(X_train, axis=0)
+    X_train -= mean_image
+    X_test -= mean_image
+
     return X_train, y_train, X_test, y_test
 
 
@@ -67,7 +71,7 @@ def run_training():
 
         loss = eeg.loss(logits, labels_placeholder)
 
-        train_step = eeg.training(loss, FLAGS.learning_rate)
+        train_step = eeg.training(loss, FLAGS.learning_rate, FLAGS.learning_rate_decay)
 
         accuracy = eeg.evaluation(logits, labels_placeholder)
 
@@ -88,6 +92,8 @@ def run_training():
         train_indicies = np.arange(X_train.shape[0])
         np.random.shuffle(train_indicies)
 
+        # record the max test accuracy every epoch
+        max_test_accuracy = 0
         iter_per_epoch = int(math.ceil(X_train.shape[0]/FLAGS.batch_size))
         for e in range(FLAGS.epochs):
             start_time = time.time()
@@ -119,6 +125,10 @@ def run_training():
             test_writer.add_summary(summary, global_step=e*iter_per_epoch)
             print('Test accuracy at epoch %s: %s' % (e, acc))
 
+            if acc > max_test_accuracy:
+                max_test_accuracy = acc
+                print('Max test accuracy: %s' % (max_test_accuracy))
+
             duration = time.time() - start_time
             print('The time span of 1 epoch: %s' % (duration))
             saver.save(sess, save_path=FLAGS.log_dir+'/model', global_step=(e+1)*iter_per_epoch)
@@ -139,13 +149,19 @@ if __name__ == '__main__':
     parser.add_argument(
         '--learning_rate',
         type=float,
-        default=0.001,
+        default=0.005,
         help='Initial learning rate.'
+    )
+    parser.add_argument(
+        '--learning_rate_decay',
+        type=float,
+        default=0.83,
+        help='Exponential decay learning rate.'
     )
     parser.add_argument(
         '--epochs',
         type=int,
-        default=20,
+        default=100,
         help='Number of epochs to run trainer.'
     )
     parser.add_argument(
@@ -175,7 +191,7 @@ if __name__ == '__main__':
     parser.add_argument(
         '--dense1',
         type=int,
-        default=512,
+        default=1024,
         help='Number of units in hidden layer 1.'
     )
     parser.add_argument(
@@ -187,13 +203,13 @@ if __name__ == '__main__':
     parser.add_argument(
         '--dropout',
         type=float,
-        default='0.5',
+        default='0.6',
         help='Dropout rate.'
     )
     parser.add_argument(
         '--log_dir',
         type=str,
-        default='/tmp/eeg',
+        default='d:/tmp/eeg_dp0.6_nm_decay0.83',
         help='Directory to put the log data.'
     )
 
