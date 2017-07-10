@@ -2,7 +2,6 @@ from __future__ import print_function, division
 from builtins import range
 import numpy as np
 
-
 """
 This file defines layer types that are commonly used for recurrent neural
 networks.
@@ -35,7 +34,7 @@ def rnn_step_forward(x, prev_h, Wx, Wh, b):
     # and cache variables respectively.                                          #
     ##############################################################################
     next_h = np.tanh(np.dot(x, Wx) + np.dot(prev_h, Wh) + b)
-    cache = x, Wx, Wh, b, next_h
+    cache = x, Wx, Wh, b, next_h, prev_h
 
     return next_h, cache
 
@@ -62,9 +61,15 @@ def rnn_step_backward(dnext_h, cache):
     # HINT: For the tanh function, you can compute the local derivative in terms #
     # of the output value from tanh.                                             #
     ##############################################################################
+    x, Wx, Wh, b, next_h, prev_h = cache
 
-
-    pass
+    # 令next_h=tanh(z)
+    dz = dnext_h * (1 - next_h ** 2)
+    dx = np.dot(dz, Wx.T)
+    dprev_h = np.dot(dz, Wh.T)
+    dWx = np.dot(x.T, dz)
+    dWh = np.dot(dz.T, prev_h).T
+    db = np.sum(dz, axis=0)
 
     return dx, dprev_h, dWx, dWh, db
 

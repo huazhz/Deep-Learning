@@ -35,13 +35,16 @@ def lossFun(inputs, targets, hprev):
     hs[-1] = np.copy(hprev)
     loss = 0
     # forward pass
-    # len(inputs) == seq_length
+    # len(inputs) == seq_length(25)
     for t in range(len(inputs)):
-        # 这里的inputs是已经转成数字（索引 ）的数组了
+        # 这里的inputs是已经转成数字（索引）的数组了
+        # xs中的每个元素是inputs中的每个索引转成one-hot的形式
         xs[t] = np.zeros((vocab_size, 1))  # encode in 1-of-k representation
         xs[t][inputs[t]] = 1
 
+        # hs[t]指的是每一步的state
         hs[t] = np.tanh(np.dot(Wxh, xs[t]) + np.dot(Whh, hs[t - 1]) + bh)  # hidden state
+        # ys[t]指的是下一个字符的预测值(one-hot)
         ys[t] = np.dot(Why, hs[t]) + by  # unnormalized log probabilities for next chars
         ps[t] = np.exp(ys[t]) / np.sum(np.exp(ys[t]))  # probabilities for next chars
         loss += -np.log(ps[t][targets[t], 0])  # softmax (cross-entropy loss)
@@ -50,9 +53,9 @@ def lossFun(inputs, targets, hprev):
     dbh, dby = np.zeros_like(bh), np.zeros_like(by)
     dhnext = np.zeros_like(hs[0])
     for t in reversed(range(len(inputs))):
+        # np.copy直接复制整个数组，而不是引用
         dy = np.copy(ps[t])
-        dy[targets[
-            t]] -= 1  # backprop into y. see http://cs231n.github.io/neural-networks-case-study/#grad if confused here
+        dy[targets[t]] -= 1  # backprop into y. see http://cs231n.github.io/neural-networks-case-study/#grad if confused here
         dWhy += np.dot(dy, hs[t].T)
         dby += dy
         dh = np.dot(Why.T, dy) + dhnext  # backprop into h
