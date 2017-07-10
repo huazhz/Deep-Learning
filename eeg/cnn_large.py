@@ -7,13 +7,13 @@ import numpy as np
 import scipy.io as sio
 import tensorflow as tf
 
-from model import eeg_large
+from model import eeg_large as eeg
 
 # Basic model parameters as external flags.
 FLAGS = None
 
 def loadEEGData():
-    dataPath = 'F:/Deep Learning/eeg/dataset/sz2/'
+    dataPath = 'F:/Deep Learning/eeg/dataset/health2/'
     X_train = sio.loadmat(dataPath+'X_train.mat')['X_train']
     X_test = sio.loadmat(dataPath+'X_test.mat')['X_test']
     y_train = sio.loadmat(dataPath+'y_train.mat')['y_train']
@@ -74,7 +74,7 @@ def run_training():
         #     dense2_units=FLAGS.dense2,
         #     dropout_rate=FLAGS.dropout)
 
-        logits = eeg_large.inference(
+        logits = eeg.inference(
             images_placeholder=images_placeholder,
             is_training=is_training,
             depth1=FLAGS.depth1,
@@ -84,11 +84,11 @@ def run_training():
             dense2_units=FLAGS.dense2,
             dropout_rate=FLAGS.dropout)
 
-        loss = eeg_large.loss(logits, labels_placeholder)
+        loss = eeg.loss(logits, labels_placeholder)
 
-        train_step = eeg_large.training(loss, FLAGS.learning_rate, FLAGS.learning_rate_decay)
+        train_step = eeg.training(loss, FLAGS.learning_rate, FLAGS.learning_rate_decay)
 
-        accuracy = eeg_large.evaluation(logits, labels_placeholder)
+        accuracy = eeg.evaluation(logits, labels_placeholder)
 
         merged = tf.summary.merge_all()
 
@@ -170,7 +170,7 @@ if __name__ == '__main__':
     parser.add_argument(
         '--learning_rate_decay',
         type=float,
-        default=0.86,
+        default=0.93,
         help='Exponential decay learning rate.'
     )
     parser.add_argument(
