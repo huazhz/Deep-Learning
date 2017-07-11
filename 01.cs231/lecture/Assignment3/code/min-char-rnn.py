@@ -59,11 +59,13 @@ def lossFun(inputs, targets, hprev):
         dWhy += np.dot(dy, hs[t].T)
         dby += dy
         dh = np.dot(Why.T, dy) + dhnext  # backprop into h
+
         dhraw = (1 - hs[t] * hs[t]) * dh  # backprop through tanh nonlinearity
         dbh += dhraw
         dWxh += np.dot(dhraw, xs[t].T)
         dWhh += np.dot(dhraw, hs[t - 1].T)
-        dhnext = np.dot(Whh.T, dhraw)
+
+        dhnext = np.dot(Whh.T, dhraw)   # 这个算的就是dhprev
     for dparam in [dWxh, dWhh, dWhy, dbh, dby]:
         np.clip(dparam, -5, 5, out=dparam)  # clip to mitigate exploding gradients
     return loss, dWxh, dWhh, dWhy, dbh, dby, hs[len(inputs) - 1]

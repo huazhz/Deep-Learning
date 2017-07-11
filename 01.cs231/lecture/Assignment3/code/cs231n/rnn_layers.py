@@ -103,14 +103,12 @@ def rnn_forward(x, h0, Wx, Wh, b):
     h = np.zeros((N,T,H))
     cache = {}
 
+    # 这个h0的处理要注意一下
     prev_h = h0
     for t in range(T):
         xt = np.reshape(x[:,t,:], (N,D))
-        next_h, cache_t = rnn_step_forward(xt, prev_h, Wx, Wh, b)
-        prev_h = next_h
-
-        h[:,t,:] = next_h
-        cache[t] = cache_t
+        h[:,t,:], cache[t] = rnn_step_forward(xt, prev_h, Wx, Wh, b)
+        prev_h = h[:,t,:]
 
     return h, cache
 
@@ -135,10 +133,28 @@ def rnn_backward(dh, cache):
     # sequence of data. You should use the rnn_step_backward function that you   #
     # defined above. You can use a for loop to help compute the backward pass.   #
     ##############################################################################
-    pass
-    ##############################################################################
-    #                               END OF YOUR CODE                             #
-    ##############################################################################
+    N, T, H = dh.shape
+    N, D = cache[0][0].shape
+    dx = np.zeros((N, T, D))
+    dWx = np.zeros((D, H))
+    dWh = np.zeros((H, H))
+    db = np.zeros((H,))
+
+    dh_next = np.zeros((N, H))
+    for i in reversed(np.arange(T)):
+        # 这里的dh很是令人费解，实际上，传入的dh是 dloss/dh
+        # 如果我的理解没错的话，是指每一个state的loss对这个state的梯度
+        # predict = V*state, 所有state共享参数V，而且h是所有state的矩阵，一次就能计算所有loss
+        dh_cur = dh_next + dh[:, i, :]
+        dx[:, i, :], dh_prev, tdWx, tdWh, tdb = rnn_step_backward(dh_cur, cache[i])
+        dWx += tdWx
+        dWh += tdWh
+        db += tdb
+
+        dh_next = dh_prev
+
+    dh0 = dh_prev
+
     return dx, dh0, dWx, dWh, db
 
 
