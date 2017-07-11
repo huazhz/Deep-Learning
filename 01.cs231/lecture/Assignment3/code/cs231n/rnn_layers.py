@@ -164,9 +164,14 @@ def word_embedding_forward(x, W):
     each sequence has length T. We assume a vocabulary of V words, assigning each
     to a vector of dimension D.
 
+    minibatches size N
+    sequence length T
+    vocabulary of V words
+    dimension D
+
     Inputs:
     - x: Integer array of shape (N, T) giving indices of words. Each element idx
-      of x muxt be in the range 0 <= idx < V.
+      of x must be in the range 0 <= idx < V.
     - W: Weight matrix of shape (V, D) giving word vectors for all words.
 
     Returns a tuple of:
@@ -176,13 +181,16 @@ def word_embedding_forward(x, W):
     out, cache = None, None
     ##############################################################################
     # TODO: Implement the forward pass for word embeddings.                      #
-    #                                                                            #
     # HINT: This can be done in one line using NumPy's array indexing.           #
     ##############################################################################
-    pass
-    ##############################################################################
-    #                               END OF YOUR CODE                             #
-    ##############################################################################
+    # x是N个长度为T的序列的索引（整数）
+    # W是将V个单词转成向量形式，每一行D维向量代表一个单词
+    N, T = x.shape
+    V, D = W.shape
+    out = np.zeros((N, T, D))
+    out[range(N),:,:] = W[x[range(N),:],:]
+    cache = x, N, T, V, D
+
     return out, cache
 
 
@@ -208,10 +216,24 @@ def word_embedding_backward(dout, cache):
     # Note that Words can appear more than once in a sequence.                   #
     # HINT: Look up the function np.add.at                                       #
     ##############################################################################
-    pass
-    ##############################################################################
-    #                               END OF YOUR CODE                             #
-    ##############################################################################
+
+    # 如果将x转成one-hot形式，则x（N, T, V）
+    # out = x * W
+    # dW = dout * x
+    x, N, T, V, D = cache
+    dim = N*T
+
+    dout_reshape = np.reshape(dout, (dim, D))
+
+    # 将x转成one-hot形式
+    x_new  = np.zeros((dim, V))
+    for i in range(dim):
+        n = int(i / T)
+        t = int(i % T)
+        x_new[i, x[n,t]] = 1
+
+    dW = np.dot(x_new.T, dout_reshape)
+
     return dW
 
 
