@@ -128,3 +128,13 @@
 > TensorFlow's Details
 
 ### 1300_Variables
+
+- 模型的存储与恢复，这个挺有用的
+
+### 1400_Tensor
+
+- tensor介绍
+
+### 1500_SharingVariables
+
+- 这个没怎么看懂
