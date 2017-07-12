@@ -15,6 +15,9 @@ class CaptioningRNN(object):
     sequences of length T, has an RNN hidden dimension of H, uses word vectors
     of dimension W, and operates on minibatches of size N.
 
+    input vectors of size D
+    word vectors of dimension W
+
     Note that we don't use any regularization for the CaptioningRNN.
     """
 
