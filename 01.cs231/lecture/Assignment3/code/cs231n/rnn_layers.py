@@ -159,6 +159,10 @@ def rnn_backward(dh, cache):
 
 
 def word_embedding_forward(x, W):
+    # x中存的是样本中所有单词对应的索引
+    # W中存的是样本中所有出现的单词对应的向量
+    # 这个函数的作用就是将x从索引的形式转成向量的形式
+
     """
     Forward pass for word embeddings. We operate on minibatches of size N where
     each sequence has length T. We assume a vocabulary of V words, assigning each
@@ -380,6 +384,8 @@ def lstm_backward(dh, cache):
 
 
 def temporal_affine_forward(x, w, b):
+    # 生成score
+
     """
     Forward pass for a temporal affine layer. The input is a set of D-dimensional
     vectors arranged into a minibatch of N timeseries, each of length T. We use

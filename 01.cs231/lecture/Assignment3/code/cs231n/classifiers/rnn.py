@@ -6,6 +6,7 @@ from cs231n.layers import *
 from cs231n.rnn_layers import *
 
 
+
 class CaptioningRNN(object):
     """
     A CaptioningRNN produces captions from image features using a recurrent
@@ -93,6 +94,7 @@ class CaptioningRNN(object):
         - loss: Scalar loss
         - grads: Dictionary of gradients parallel to self.params
         """
+
         # Cut captions into two pieces: captions_in has everything but the last word
         # and will be input to the RNN; captions_out has everything but the first
         # word and this is what we will expect the RNN to generate. These are offset
@@ -140,10 +142,19 @@ class CaptioningRNN(object):
         # defined above to store loss and gradients; grads[k] should give the      #
         # gradients for self.params[k].                                            #
         ############################################################################
-        pass
-        ############################################################################
-        #                             END OF YOUR CODE                             #
-        ############################################################################
+        # forward pass
+        h0 = np.dot(features, W_proj) + b_proj
+        vectors_in, cache_v = word_embedding_forward(captions_in, W_embed)
+        h, cache_h = rnn_forward(vectors_in, h0, Wx, Wh, b) #(N, T, H)
+        score, cache_s = temporal_affine_forward(h, W_vocab, b_vocab) #(N, T, V)
+        loss, dscore = temporal_softmax_loss(score, captions_out, mask)
+
+        # backward pass
+        dh, grads['W_vocab'], grads['b_vocab'] = temporal_affine_backward(dscore, cache_s)
+        dvectors_in, dh0, grads['Wx'], grads['Wh'], grads['b'] = rnn_backward(dh, cache_h)
+        grads['W_embed'] = word_embedding_backward(dvectors_in, cache_v)
+        grads['W_proj'] = np.dot(features.T, dh0)
+        grads['b_proj'] = np.sum(dh0, axis=0)
 
         return loss, grads
 
