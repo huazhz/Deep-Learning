@@ -6,7 +6,6 @@ from cs231n.layers import *
 from cs231n.rnn_layers import *
 
 
-
 class CaptioningRNN(object):
     """
     A CaptioningRNN produces captions from image features using a recurrent
@@ -78,7 +77,6 @@ class CaptioningRNN(object):
         for k, v in self.params.items():
             self.params[k] = v.astype(self.dtype)
 
-
     def loss(self, features, captions):
         """
         Compute training-time loss for the RNN. We input image features and
@@ -145,8 +143,8 @@ class CaptioningRNN(object):
         # forward pass
         h0 = np.dot(features, W_proj) + b_proj
         vectors_in, cache_v = word_embedding_forward(captions_in, W_embed)
-        h, cache_h = rnn_forward(vectors_in, h0, Wx, Wh, b) #(N, T, H)
-        score, cache_s = temporal_affine_forward(h, W_vocab, b_vocab) #(N, T, V)
+        h, cache_h = rnn_forward(vectors_in, h0, Wx, Wh, b)  # (N, T, H)
+        score, cache_s = temporal_affine_forward(h, W_vocab, b_vocab)  # (N, T, V)
         loss, dscore = temporal_softmax_loss(score, captions_out, mask)
 
         # backward pass
@@ -157,7 +155,6 @@ class CaptioningRNN(object):
         grads['b_proj'] = np.sum(dh0, axis=0)
 
         return loss, grads
-
 
     def sample(self, features, max_length=30):
         """
@@ -213,8 +210,19 @@ class CaptioningRNN(object):
         # functions; you'll need to call rnn_step_forward or lstm_step_forward in #
         # a loop.                                                                 #
         ###########################################################################
-        pass
-        ############################################################################
-        #                             END OF YOUR CODE                             #
-        ############################################################################
+        h0 = np.dot(features, W_proj) + b_proj
+        x = self._start * np.zeros((N,1), dtype=int)
+
+        input, _ = word_embedding_forward(x, W_embed)
+        h_prev = h0
+
+        for t in range(max_length):
+            input = input.reshape((N,input.shape[2]))
+            h_next, _ = rnn_step_forward(input, h_prev, Wx, Wh, b)
+            score = np.dot(h_prev, W_vocab) + b_vocab
+            captions[:,t] = np.argmax(score, axis=1)
+
+            h_prev = h_next
+            input, _ = word_embedding_forward(np.reshape(captions[:,t], (-1,1)), W_embed)
+
         return captions
