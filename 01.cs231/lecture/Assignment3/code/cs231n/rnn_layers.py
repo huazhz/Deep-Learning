@@ -280,10 +280,18 @@ def lstm_step_forward(x, prev_h, prev_c, Wx, Wh, b):
     # TODO: Implement the forward pass for a single timestep of an LSTM.        #
     # You may want to use the numerically stable sigmoid implementation above.  #
     #############################################################################
-    pass
-    ##############################################################################
-    #                               END OF YOUR CODE                             #
-    ##############################################################################
+    N, D = x.shape
+    _, H = prev_h.shape
+    a = np.dot(x, Wx) + np.dot(prev_h, Wh) + b # (N,4H)
+    inputs = sigmoid(a[:,0:H])
+    forgets = sigmoid(a[:,H:2*H])
+    outputs = sigmoid(a[:,2*H:3*H])
+    gate = np.tanh(a[:,3*H:])
+
+    next_c = forgets*prev_c + inputs*gate
+    next_h = outputs * np.tanh(next_c)
+
+    cache = next_c, prev_c, prev_h, gate, inputs, outputs, forgets, N, D, H, Wx, Wh, b, x
 
     return next_h, next_c, cache
 
@@ -305,17 +313,47 @@ def lstm_step_backward(dnext_h, dnext_c, cache):
     - dWh: Gradient of hidden-to-hidden weights, of shape (H, 4H)
     - db: Gradient of biases, of shape (4H,)
     """
-    dx, dh, dc, dWx, dWh, db = None, None, None, None, None, None
+    dx, dprev_h, dprev_c, dWx, dWh, db = None, None, None, None, None, None
     #############################################################################
     # TODO: Implement the backward pass for a single timestep of an LSTM.       #
     #                                                                           #
     # HINT: For sigmoid and tanh you can compute local derivatives in terms of  #
     # the output value from the nonlinearity.                                   #
     #############################################################################
-    pass
-    ##############################################################################
-    #                               END OF YOUR CODE                             #
-    ##############################################################################
+    next_c, prev_c, prev_h, gate, inputs, outputs, forgets, N, D, H, Wx, Wh, b, x = cache
+
+    dWx = np.zeros((D,4*H))
+    dWh = np.zeros((H,4*H))
+    db = np.zeros((4*H,))
+
+    do = dnext_h * np.tanh(next_c)
+    dnext_c += dnext_h * outputs * (1-np.tanh(next_c)**2)
+    df = dnext_c * prev_c
+    di = dnext_c * gate
+    dg = dnext_c * inputs
+
+    dprev_c = dnext_c * forgets
+    da1 = di * inputs * (1-inputs)
+    da2 = df * forgets * (1-forgets)
+    da3 = do * outputs * (1-outputs)
+    da4 = dg * (1 - gate**2)
+
+    dx = np.dot(da1, Wx[:,0:H].T) + np.dot(da2, Wx[:,H:2*H].T)\
+         + np.dot(da3, Wx[:,2*H:3*H].T) + np.dot(da4, Wx[:,3*H:].T)
+    dprev_h = np.dot(da1, Wh[:,0:H].T) + np.dot(da2, Wh[:,H:2*H].T) \
+              + np.dot(da3, Wh[:,2*H:3*H].T) + np.dot(da4, Wh[:,3*H:].T)
+    dWx[:,:H] = np.dot(x.T, da1)
+    dWx[:,H:2*H] = np.dot(x.T, da2)
+    dWx[:,2*H:3*H] = np.dot(x.T, da3)
+    dWx[:,3*H:] = np.dot(x.T, da4)
+    dWh[:,:H] = np.dot(prev_h.T, da1)
+    dWh[:,H:2*H] = np.dot(prev_h.T, da2)
+    dWh[:,2*H:3*H] = np.dot(prev_h.T, da3)
+    dWh[:,3*H:] = np.dot(prev_h.T, da4)
+    db[:H] = np.sum(da1, axis=0)
+    db[H:2*H] = np.sum(da2, axis=0)
+    db[2*H:3*H] = np.sum(da3, axis=0)
+    db[3*H:] = np.sum(da4, axis=0)
 
     return dx, dprev_h, dprev_c, dWx, dWh, db
 
