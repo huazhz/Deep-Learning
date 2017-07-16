@@ -13,7 +13,7 @@ from model import eeg
 FLAGS = None
 
 def loadEEGData():
-    dataPath = 'F:/Deep Learning/eeg/dataset/sz/'
+    dataPath = 'F:/Deep Learning/eeg/dataset/health/'
     X_train = sio.loadmat(dataPath+'X_train.mat')['X_train']
     X_test = sio.loadmat(dataPath+'X_test.mat')['X_test']
     y_train = sio.loadmat(dataPath+'y_train.mat')['y_train']
@@ -69,7 +69,7 @@ def run_training():
         #     dense2_units=FLAGS.dense2,
         #     dropout_rate=FLAGS.dropout)
 
-        logits = eeg.inference_large(
+        logits = eeg.inference(
             images_placeholder=images_placeholder,
             is_training=is_training,
             depth1=FLAGS.depth1,
@@ -165,7 +165,7 @@ if __name__ == '__main__':
     parser.add_argument(
         '--learning_rate_decay',
         type=float,
-        default=0.86,
+        default=0.9,
         help='Exponential decay learning rate.'
     )
     parser.add_argument(
@@ -189,13 +189,13 @@ if __name__ == '__main__':
     parser.add_argument(
         '--depth2',
         type=int,
-        default=48,
+        default=64,
         help='The depth of second conv layer.'
     )
     parser.add_argument(
         '--depth3',
         type=int,
-        default=64,
+        default=128,
         help='The depth of third conv layer.'
     )
     parser.add_argument(
@@ -213,13 +213,13 @@ if __name__ == '__main__':
     parser.add_argument(
         '--dropout',
         type=float,
-        default='0.6',
+        default='0.5',
         help='Dropout rate.'
     )
     parser.add_argument(
         '--log_dir',
         type=str,
-        default='d:/tmp/eeg_large',
+        default='d:/tmp/eeg_deeper',
         help='Directory to put the log data.'
     )
 

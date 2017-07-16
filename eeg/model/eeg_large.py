@@ -78,7 +78,7 @@ def inference(images_placeholder, is_training,
         tf.summary.histogram('pool', pool)
 
     with tf.name_scope('dense1'):
-        pool_flat = tf.reshape(pool, [-1, 10 * 3 * 64])
+        pool_flat = tf.reshape(pool, [-1, 10 * 3 * depth3])
         dense = tf.layers.dense(inputs=pool_flat, units=dense1_units, activation=tf.nn.relu)
         tf.summary.histogram('dense', dense)
 
