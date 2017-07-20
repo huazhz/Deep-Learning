@@ -1,6 +1,11 @@
 import tensorflow as tf
 import numpy as np
 
+"""
+使用tf.gradients反向求导
+这个demo是比较正常的，直接从最后结果向前传播
+"""
+
 # y = w*x
 w = tf.Variable([[1,2]])
 x = [[3],[4]]
