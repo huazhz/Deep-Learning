@@ -11,14 +11,16 @@ from model import eeg
 
 # Basic model parameters as external flags.
 FLAGS = None
+LOGITS_PATH = './dataset/health/logits.mat'
+DATA_PATH = 'F:/Deep Learning/eeg/dataset/health/'
+LOG_PATH = 'F:/Deep Learning/eeg/dataset/health/ckpt/e1'
 
 
 def loadEEGData():
-    dataPath = 'F:/Deep Learning/eeg/dataset/health/'
-    X_train = sio.loadmat(dataPath + 'X_train.mat')['X_train']
-    X_test = sio.loadmat(dataPath + 'X_test.mat')['X_test']
-    y_train = sio.loadmat(dataPath + 'y_train.mat')['y_train']
-    y_test = sio.loadmat(dataPath + 'y_test.mat')['y_test']
+    X_train = sio.loadmat(DATA_PATH + 'X_train.mat')['X_train']
+    X_test = sio.loadmat(DATA_PATH + 'X_test.mat')['X_test']
+    y_train = sio.loadmat(DATA_PATH + 'y_train.mat')['y_train']
+    y_test = sio.loadmat(DATA_PATH + 'y_test.mat')['y_test']
 
     # labels是从1到58，改成0到57
     y_train = y_train - 1
@@ -131,7 +133,7 @@ def run_training():
                                       labels_placeholder: y_test,
                                       is_training: False
                                   })
-                
+                sio.savemat(LOGITS_PATH, {'data': result})
 
         train_writer.close()
         test_writer.close()
@@ -197,7 +199,7 @@ if __name__ == '__main__':
     parser.add_argument(
         '--dense2',
         type=int,
-        default=58,
+        default=eeg.NUM_CLASS,
         help='Number of units in hidden layer 2.'
     )
     parser.add_argument(
@@ -209,7 +211,7 @@ if __name__ == '__main__':
     parser.add_argument(
         '--log_dir',
         type=str,
-        default='d:/tmp/eeg_deeper',
+        default=LOG_PATH,
         help='Directory to put the log data.'
     )
 
