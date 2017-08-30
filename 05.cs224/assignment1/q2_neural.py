@@ -27,7 +27,7 @@ def forward_backward_prop(data, labels, params, dimensions):
     ofs = 0
     Dx, H, Dy = (dimensions[0], dimensions[1], dimensions[2])
 
-    W1 = np.reshape(params[ofs:ofs+ Dx * H], (Dx, H))
+    W1 = np.reshape(params[ofs:ofs + Dx * H], (Dx, H))
     ofs += Dx * H
     b1 = np.reshape(params[ofs:ofs + H], (1, H))
     ofs += H
@@ -35,19 +35,32 @@ def forward_backward_prop(data, labels, params, dimensions):
     ofs += H * Dy
     b2 = np.reshape(params[ofs:ofs + Dy], (1, Dy))
 
-    ### YOUR CODE HERE: forward propagation
-    raise NotImplementedError
-    ### END YOUR CODE
+    # compute the loss
+    hidden = sigmoid(np.dot(data, W1) + b1)
+    scores = np.dot(hidden, W2) + b2
+    sm, log_probs = softmax(scores)
+    _, y = np.where(labels==1)
+    N = labels.shape[0]
+    cost = -np.sum(log_probs[np.arange(N),y]) / N
 
-    ### YOUR CODE HERE: backward propagation
-    raise NotImplementedError
-    ### END YOUR CODE
+    # compute the gradients
+    dscores = sm.copy()
+    dscores[np.arange(N),y] -= 1
+    dscores /= N
+    gradW2 = np.dot(hidden.T, dscores)
+    gradb2 = np.sum(dscores, axis=0, keepdims=True)
+
+    dhidden = np.dot(dscores, W2.T)
+    dsigmoid = dhidden * hidden * (1-hidden)
+    gradW1 = np.dot(data.T, dsigmoid)
+    gradb1 = np.sum(dsigmoid, axis=0, keepdims=True)
 
     ### Stack gradients (do not modify)
     grad = np.concatenate((gradW1.flatten(), gradb1.flatten(),
         gradW2.flatten(), gradb2.flatten()))
 
     return cost, grad
+
 
 
 def sanity_check():
@@ -64,8 +77,9 @@ def sanity_check():
     for i in range(N):
         labels[i, random.randint(0,dimensions[2]-1)] = 1
 
-    params = np.random.randn((dimensions[0] + 1) * dimensions[1] + (
-        dimensions[1] + 1) * dimensions[2], )
+    params = np.random.randn(
+        (dimensions[0] + 1) * dimensions[1] +
+        (dimensions[1] + 1) * dimensions[2], )
 
     gradcheck_naive(lambda params:
         forward_backward_prop(data, labels, params, dimensions), params)
@@ -80,10 +94,10 @@ def your_sanity_checks():
     """
     print("Running your sanity checks...")
     ### YOUR CODE HERE
-    raise NotImplementedError
+    # raise NotImplementedError
     ### END YOUR CODE
 
 
 if __name__ == "__main__":
     sanity_check()
-    your_sanity_checks()
+    # your_sanity_checks()

@@ -21,7 +21,7 @@ def inference(images_placeholder, is_training,
     :param depth3: conv3 filter depth
     :param dense1_units: dense1 units number
     :param dense2_units: dense2 units number
-    :return: softmax_linear: Output tensor with the computed logits.
+    :return: logits: Output tensor with the computed logits.
     """
     training_mode = is_training is not None
 

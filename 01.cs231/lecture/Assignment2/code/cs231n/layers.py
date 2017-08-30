@@ -685,15 +685,17 @@ def softmax_loss(x, y):
     # Z是每行escore之和
     Z = np.sum(np.exp(shifted_logits), axis=1, keepdims=True)
 
+    # 下面这两行求的是softmax的结果(probs)，分开看可能有点难懂，结合起来一起看就懂了
     log_probs = shifted_logits - np.log(Z)
+    probs = np.exp(log_probs)   # 指数相减就是除法
 
-    probs = np.exp(log_probs)
+    # 下面是cross entropy loss
     N = x.shape[0]
     # 这里的loss是没有正则化的loss，因为正则化需要的参数不在这个类中，所以正则化放在这里是不合适的
     loss = -np.sum(log_probs[np.arange(N), y]) / N
 
     # copy()方法是重新分配内存，而直接的赋值只是引用的复制，对b的修改会反应到a上
-    dscore = probs.copy()
-    dscore[np.arange(N), y] -= 1
-    dscore /= N
-    return loss, dscore
+    dx = probs.copy()
+    dx[np.arange(N), y] -= 1
+    dx /= N
+    return loss, dx

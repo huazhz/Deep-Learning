@@ -29,10 +29,29 @@ def gradcheck_naive(f, x):
         # before calling f(x) each time. This will make it possible
         # to test cost functions with built in randomness later.
 
+        '''
+        下面这种做法可能不太对
         random.setstate(rndstate)
         fxh, _ = f(x[ix] + h)
+        random.setstate(rndstate)
         fxh2, _ = f(x[ix] - h)
+        '''
+        old_value = x[ix]
+        random.setstate(rndstate)
+        x[ix] = old_value + h
+        fxh, _ = f(x)
+
+        x[ix] = old_value - h
+        random.setstate(rndstate)
+        fxh2, _ = f(x)
+        x[ix] = old_value
+
         numgrad = (fxh - fxh2) / (2*h)
+
+        # forward_backward_prop函数返回的梯度是一个向量
+        # 而上面的遍历方法ix是一个二维数组（第二个数是0）
+        if len(x.shape) == 1:
+            ix = ix[0]
 
         # Compare gradients
         reldiff = abs(numgrad - grad[ix]) / max(1, abs(numgrad), abs(grad[ix]))

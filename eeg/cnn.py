@@ -12,12 +12,13 @@ from model import eeg
 # Basic model parameters as external flags.
 FLAGS = None
 
+
 def loadEEGData():
     dataPath = 'F:/Deep Learning/eeg/dataset/health/'
-    X_train = sio.loadmat(dataPath+'X_train.mat')['X_train']
-    X_test = sio.loadmat(dataPath+'X_test.mat')['X_test']
-    y_train = sio.loadmat(dataPath+'y_train.mat')['y_train']
-    y_test = sio.loadmat(dataPath+'y_test.mat')['y_test']
+    X_train = sio.loadmat(dataPath + 'X_train.mat')['X_train']
+    X_test = sio.loadmat(dataPath + 'X_test.mat')['X_test']
+    y_train = sio.loadmat(dataPath + 'y_train.mat')['y_train']
+    y_test = sio.loadmat(dataPath + 'y_test.mat')['y_test']
 
     # labels是从1到58，改成0到57
     y_train = y_train - 1
@@ -35,22 +36,6 @@ def loadEEGData():
     return X_train, y_train, X_test, y_test
 
 
-# def placeholder_inputs(batch_size):
-#     """Generate placeholder variables to represent the input tensors.
-#
-#     Args:
-#       batch_size: The batch size will be baked into both placeholders.
-#
-#     Returns:
-#       images_placeholder: Images placeholder.
-#       labels_placeholder: Labels placeholder.
-#     """
-#     images_placeholder = tf.placeholder(tf.float32, shape=(batch_size,
-#                                                            eeg.IMAGE_PIXELS))
-#     labels_placeholder = tf.placeholder(tf.int32, shape=(batch_size))
-#     return images_placeholder, labels_placeholder
-
-
 def run_training():
     X_train, y_train, X_test, y_test = loadEEGData()
 
@@ -58,16 +43,6 @@ def run_training():
         images_placeholder = tf.placeholder(dtype=tf.float32, shape=[None, 45, 31, 1], name='images-input')
         labels_placeholder = tf.placeholder(dtype=tf.int32, shape=[None], name='y-input')
         is_training = tf.placeholder(dtype=tf.bool)
-
-        # logits = eeg.inference(
-        #     images_placeholder=images_placeholder,
-        #     is_training=is_training,
-        #     depth1=FLAGS.depth1,
-        #     depth2=FLAGS.depth2,
-        #     depth3=FLAGS.depth3,
-        #     dense1_units=FLAGS.dense1,
-        #     dense2_units=FLAGS.dense2,
-        #     dropout_rate=FLAGS.dropout)
 
         logits = eeg.inference(
             images_placeholder=images_placeholder,
@@ -104,35 +79,38 @@ def run_training():
 
         # record the max test accuracy every epoch
         max_test_accuracy = 0
-        iter_per_epoch = int(math.ceil(X_train.shape[0]/FLAGS.batch_size))
+        # 每一个epoch的迭代次数
+        iter_per_epoch = int(math.ceil(X_train.shape[0] / FLAGS.batch_size))
+
         for e in range(FLAGS.epochs):
             start_time = time.time()
 
+            # 一个epoch的训练
             for i in range(iter_per_epoch):
-
                 # generate indicies for the batch
                 # 取模是因为上面是上取整，有可能超出总样本数
-                start_idx = (i*FLAGS.batch_size)%X_train.shape[0]
-                idx = train_indicies[start_idx:start_idx+FLAGS. batch_size]
+                start_idx = (i * FLAGS.batch_size) % X_train.shape[0]
+                idx = train_indicies[start_idx:start_idx + FLAGS.batch_size]
 
                 summary, _ = sess.run(
                     [merged, train_step],
                     feed_dict={
-                        images_placeholder: X_train[idx,:],
+                        images_placeholder: X_train[idx, :],
                         labels_placeholder: y_train[idx],
-                        is_training:True
+                        is_training: True
                     }
                 )
 
-                train_writer.add_summary(summary, global_step=e*iter_per_epoch+i)
+                train_writer.add_summary(summary, global_step=e * iter_per_epoch + i)
 
+            # 每结束一个epoch的训练之后，就在测试集上测试一次准确率
             summary, acc = sess.run([merged, accuracy],
                                     feed_dict={
-                                        images_placeholder:X_test,
-                                        labels_placeholder:y_test,
+                                        images_placeholder: X_test,
+                                        labels_placeholder: y_test,
                                         is_training: False
                                     })
-            test_writer.add_summary(summary, global_step=e*iter_per_epoch)
+            test_writer.add_summary(summary, global_step=e * iter_per_epoch)
             print('Test accuracy at epoch %s: %s' % (e, acc))
 
             if acc > max_test_accuracy:
@@ -141,7 +119,19 @@ def run_training():
 
             duration = time.time() - start_time
             print('The time span of 1 epoch: %s' % (duration))
-            saver.save(sess, save_path=FLAGS.log_dir+'/model', global_step=(e+1)*iter_per_epoch)
+            saver.save(sess, save_path=FLAGS.log_dir + '/model', global_step=(e + 1) * iter_per_epoch)
+
+            # 最后一个epoch的时候，把模型在测试集上的logits（test_size*58的数组）保存起来
+            # 查看这个logits就能知道正确的概率和不正确的概率差距有多大
+            # 如果想知道哪些样本被分错类了，只需要对比logits和labels就能得到结果
+            if e == FLAGS.epochs - 1:
+                result = sess.run([logits],
+                                  feed_dict={
+                                      images_placeholder: X_test,
+                                      labels_placeholder: y_test,
+                                      is_training: False
+                                  })
+                
 
         train_writer.close()
         test_writer.close()

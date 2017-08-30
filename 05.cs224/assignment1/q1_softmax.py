@@ -34,7 +34,7 @@ def softmax(x):
         shifted_logits = x - np.max(x, axis=1, keepdims=True)
         # Z是每行escore之和
         Z = np.sum(np.exp(shifted_logits), axis=1, keepdims=True)
-        # softmax计算方法的变形，取log
+
         log_probs = shifted_logits - np.log(Z)
         x = np.exp(log_probs)
 
@@ -46,7 +46,7 @@ def softmax(x):
         x = np.exp(log_probs)
 
     assert x.shape == orig_shape
-    return x
+    return x, log_probs
 
 
 def test_softmax_basic():
@@ -55,19 +55,19 @@ def test_softmax_basic():
     Warning: these are not exhaustive.
     """
     print("Running basic tests...")
-    test1 = softmax(np.array([1,2]))
+    test1, _ = softmax(np.array([1,2]))
     print(test1)
     ans1 = np.array([0.26894142,  0.73105858])
     assert np.allclose(test1, ans1, rtol=1e-05, atol=1e-06)
 
-    test2 = softmax(np.array([[1001,1002],[3,4]]))
+    test2, _ = softmax(np.array([[1001,1002],[3,4]]))
     print(test2)
     ans2 = np.array([
         [0.26894142, 0.73105858],
         [0.26894142, 0.73105858]])
     assert np.allclose(test2, ans2, rtol=1e-05, atol=1e-06)
 
-    test3 = softmax(np.array([[-1001,-1002]]))
+    test3, _ = softmax(np.array([[-1001,-1002]]))
     print(test3)
     ans3 = np.array([0.73105858, 0.26894142])
     assert np.allclose(test3, ans3, rtol=1e-05, atol=1e-06)
