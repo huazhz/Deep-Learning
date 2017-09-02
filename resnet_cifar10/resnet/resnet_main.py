@@ -28,16 +28,16 @@ FLAGS = tf.app.flags.FLAGS
 tf.app.flags.DEFINE_string('dataset', 'cifar10', 'cifar10 or cifar100.')
 tf.app.flags.DEFINE_string('mode', 'train', 'train or eval.')
 # 数据所在路径
-tf.app.flags.DEFINE_string('train_data_path', '',
+tf.app.flags.DEFINE_string('train_data_path', '../cifar10/data_batch*',
                            'Filepattern for training data.')
-tf.app.flags.DEFINE_string('eval_data_path', '',
+tf.app.flags.DEFINE_string('eval_data_path', '../cifar10/test_batch.bin',
                            'Filepattern for eval data')
 
 tf.app.flags.DEFINE_integer('image_size', 32, 'Image side length.')
 
-tf.app.flags.DEFINE_string('train_dir', 'D:/log/train',
+tf.app.flags.DEFINE_string('train_dir', '../log/train',
                            'Directory to keep training outputs.')
-tf.app.flags.DEFINE_string('eval_dir', 'D:/log/eval',
+tf.app.flags.DEFINE_string('eval_dir', '../log/eval',
                            'Directory to keep eval outputs.')
 
 tf.app.flags.DEFINE_integer('eval_batch_count', 50,
@@ -45,7 +45,7 @@ tf.app.flags.DEFINE_integer('eval_batch_count', 50,
 tf.app.flags.DEFINE_bool('eval_once', False,
                          'Whether evaluate the model only once.')
 
-tf.app.flags.DEFINE_string('log_root', 'D:/log',
+tf.app.flags.DEFINE_string('log_root', '../log',
                            'Directory to keep the checkpoints. Should be a '
                            'parent directory of FLAGS.train_dir/eval_dir.')
 
@@ -61,7 +61,7 @@ def train(hps):
     model.build_graph()
 
     """
-    下面写个debug工具Windows不支持
+    下面这个debug工具Windows不支持
     param_stats = tf.contrib.tfprof.model_analyzer.print_model_analysis(
         tf.get_default_graph(),
         tfprof_options=tf.contrib.tfprof.model_analyzer.
@@ -77,18 +77,24 @@ def train(hps):
     predictions = tf.argmax(model.predictions, axis=1)
     precision = tf.reduce_mean(tf.to_float(tf.equal(predictions, truth)))
 
+    # SummarySaverHook: Saves summaries every N steps.
     summary_hook = tf.train.SummarySaverHook(
         save_steps=100,
+        # 如果指定这个了，就不用summary_writer了
         output_dir=FLAGS.train_dir,
+        # 把构建模型时的summary和记录precision的summary合并
         summary_op=tf.summary.merge([model.summaries,
                                      tf.summary.scalar('Precision', precision)]))
 
+    # Prints the given tensors every N local steps, every N seconds, or at end.
     logging_hook = tf.train.LoggingTensorHook(
         tensors={'step': model.global_step,
                  'loss': model.cost,
                  'precision': precision},
         every_n_iter=100)
 
+    # 自定义一个调整学习率的回调，其中的一些回调方法在每次run()时会被调用
+    # https://www.tensorflow.org/versions/r1.2/api_docs/python/tf/train/SessionRunHook
     class _LearningRateSetterHook(tf.train.SessionRunHook):
         """Sets learning_rate based on global step."""
 
@@ -101,6 +107,8 @@ def train(hps):
                 feed_dict={model.lrn_rate: self._lrn_rate})  # Sets learning rate
 
         def after_run(self, run_context, run_values):
+            # The run_values argument contains results of
+            # requested ops/tensors by before_run().
             train_step = run_values.results
             if train_step < 40000:
                 self._lrn_rate = 0.1
@@ -111,6 +119,7 @@ def train(hps):
             else:
                 self._lrn_rate = 0.0001
 
+    # https://www.tensorflow.org/api_docs/python/tf/train/MonitoredSession
     with tf.train.MonitoredTrainingSession(
             checkpoint_dir=FLAGS.log_root,
             hooks=[logging_hook, _LearningRateSetterHook()],

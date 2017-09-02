@@ -139,11 +139,14 @@ class ResNet(object):
 
             tf.summary.scalar('cost', self.cost)
 
+    # 这个函数是在mode=train时，构建完模型之后调用的
     def _build_train_op(self):
         """Build training specific ops for the graph."""
+        # 每次训练都记录一下learning rate
         self.lrn_rate = tf.constant(self.hps.lrn_rate, tf.float32)
         tf.summary.scalar('learning_rate', self.lrn_rate)
 
+        # Returns all variables created with trainable=True.
         trainable_variables = tf.trainable_variables()
         grads = tf.gradients(self.cost, trainable_variables)
 
@@ -152,11 +155,15 @@ class ResNet(object):
         elif self.hps.optimizer == 'mom':
             optimizer = tf.train.MomentumOptimizer(self.lrn_rate, 0.9)
 
+        # Apply gradients to variables.
         apply_op = optimizer.apply_gradients(
             zip(grads, trainable_variables),
             global_step=self.global_step, name='train_step')
 
         train_ops = [apply_op] + self._extra_train_ops
+
+        # Create an op that groups multiple operations.
+        # When this op finishes, all ops in input have finished. This op has no output.
         self.train_op = tf.group(*train_ops)
 
     # TODO(xpan): Consider batch_norm in contrib/layers/python/layers/layers.py
