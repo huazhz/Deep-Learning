@@ -295,6 +295,9 @@ def softmax_loss(x, y):
     probs /= np.sum(probs, axis=1, keepdims=True)
     N = x.shape[0]
     loss = -np.sum(np.log(probs[np.arange(N), y])) / N
+
+    # x是全连接层计算出的score，所以所dx与score有相同的维度
+    # probs是score用softmax转成的概率形式
     dx = probs.copy()
     dx[np.arange(N), y] -= 1
     dx /= N
