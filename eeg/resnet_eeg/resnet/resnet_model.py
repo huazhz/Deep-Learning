@@ -1,25 +1,3 @@
-# Copyright 2016 The TensorFlow Authors. All Rights Reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-# ==============================================================================
-
-"""ResNet model.
-
-Related papers:
-https://arxiv.org/pdf/1603.05027v2.pdf
-https://arxiv.org/pdf/1512.03385v1.pdf
-https://arxiv.org/pdf/1605.07146v1.pdf
-"""
 from collections import namedtuple
 
 import numpy as np
@@ -74,10 +52,10 @@ class ResNet(object):
         # image_size: 32
 
         with tf.variable_scope('init'):
-            # 32*32*3
+            # 32*32*1
             x = self._images
             # 32*32*16
-            x = self._conv('init_conv', x, 3, 3, 16, self._stride_arr(1))
+            x = self._conv('init_conv', x, 3, 1, 16, self._stride_arr(1))
 
         strides = [1, 2, 2]
         activate_before_residual = [True, False, False]
@@ -86,7 +64,7 @@ class ResNet(object):
             filters = [16, 64, 128, 256]
         else:
             # _residual(self, x, in_filter, out_filter, stride,
-            #  activate_before_residual=False):
+            #               activate_before_residual=False):
             res_func = self._residual
             filters = [16, 16, 32, 64]
             # Uncomment the following codes to use w28-10 wide residual network.

@@ -1,18 +1,3 @@
-# Copyright 2016 The TensorFlow Authors. All Rights Reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-# ==============================================================================
-
 """ResNet Train/Eval module.
 """
 import time
@@ -25,13 +10,12 @@ import resnet_model
 import tensorflow as tf
 
 FLAGS = tf.app.flags.FLAGS
-tf.app.flags.DEFINE_string('dataset', 'cifar10', 'cifar10 or cifar100.')
-# tf.app.flags.DEFINE_string('mode', 'train', 'train or eval.')
-tf.app.flags.DEFINE_string('mode', 'eval', 'train or eval.')
+tf.app.flags.DEFINE_string('mode', 'train', 'train or eval.')
+# tf.app.flags.DEFINE_string('mode', 'eval', 'train or eval.')
 # 数据所在路径
-tf.app.flags.DEFINE_string('train_data_path', '../cifar10/data_batch*',
+tf.app.flags.DEFINE_string('train_data_path', '../eeg/train*',
                            'Filepattern for training data.')
-tf.app.flags.DEFINE_string('eval_data_path', '../cifar10/test_batch.bin',
+tf.app.flags.DEFINE_string('eval_data_path', '../eeg/test*',
                            'Filepattern for eval data')
 
 tf.app.flags.DEFINE_integer('image_size', 32, 'Image side length.')
@@ -60,19 +44,6 @@ def train(hps):
         FLAGS.dataset, FLAGS.train_data_path, hps.batch_size, FLAGS.mode)
     model = resnet_model.ResNet(hps, images, labels, FLAGS.mode)
     model.build_graph()
-
-    """
-    下面这个debug工具Windows不支持
-    param_stats = tf.contrib.tfprof.model_analyzer.print_model_analysis(
-        tf.get_default_graph(),
-        tfprof_options=tf.contrib.tfprof.model_analyzer.
-            TRAINABLE_VARS_PARAMS_STAT_OPTIONS)
-    sys.stdout.write('total_params: %d\n' % param_stats.total_parameters)
-
-    tf.contrib.tfprof.model_analyzer.print_model_analysis(
-        tf.get_default_graph(),
-        tfprof_options=tf.contrib.tfprof.model_analyzer.FLOAT_OPS_OPTIONS)
-    """
 
     truth = tf.argmax(model.labels, axis=1)
     predictions = tf.argmax(model.predictions, axis=1)
@@ -213,7 +184,7 @@ def main(_):
                                num_classes=num_classes,
                                min_lrn_rate=0.0001,
                                lrn_rate=0.1,
-                               num_residual_units=5,
+                               num_residual_units=2,
                                use_bottleneck=False,
                                weight_decay_rate=0.0002,
                                relu_leakiness=0.1,
