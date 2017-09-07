@@ -4,19 +4,14 @@ import time
 import six
 import sys
 
-import cifar_input
+import eeg_input
 import numpy as np
 import resnet_model
 import tensorflow as tf
 
 FLAGS = tf.app.flags.FLAGS
-tf.app.flags.DEFINE_string('mode', 'train', 'train or eval.')
-# tf.app.flags.DEFINE_string('mode', 'eval', 'train or eval.')
-# 数据所在路径
-tf.app.flags.DEFINE_string('train_data_path', '../eeg/train*',
-                           'Filepattern for training data.')
-tf.app.flags.DEFINE_string('eval_data_path', '../eeg/test*',
-                           'Filepattern for eval data')
+# tf.app.flags.DEFINE_string('mode', 'train', 'train or eval.')
+tf.app.flags.DEFINE_string('mode', 'eval', 'train or eval.')
 
 tf.app.flags.DEFINE_integer('image_size', 32, 'Image side length.')
 
@@ -40,8 +35,11 @@ tf.app.flags.DEFINE_integer('num_gpus', 0,
 
 def train(hps):
     """Training loop."""
-    images, labels = cifar_input.build_input(
-        FLAGS.dataset, FLAGS.train_data_path, hps.batch_size, FLAGS.mode)
+
+    # TODO:将这个build_input函数改成返回Dataset.get_next()
+    # 如果可行的话，应该在每次run train_op 的时候，都会自动的取batch个数据
+    # 现在疑惑的地方就是，这么定义images和labels，每次run的时候会不会自动取数据
+    images, labels = eeg_input.build_input(hps.batch_size, FLAGS.mode)
     model = resnet_model.ResNet(hps, images, labels, FLAGS.mode)
     model.build_graph()
 
@@ -71,7 +69,7 @@ def train(hps):
         """Sets learning_rate based on global step."""
 
         def begin(self):
-            self._lrn_rate = 0.1
+            self._lrn_rate = 0.01
 
         def before_run(self, run_context):
             return tf.train.SessionRunArgs(
@@ -82,14 +80,14 @@ def train(hps):
             # The run_values argument contains results of
             # requested ops/tensors by before_run().
             train_step = run_values.results
-            if train_step < 40000:
-                self._lrn_rate = 0.1
-            elif train_step < 60000:
+            if train_step < 4000:
                 self._lrn_rate = 0.01
-            elif train_step < 80000:
+            elif train_step < 6000:
                 self._lrn_rate = 0.001
-            else:
+            elif train_step < 8000:
                 self._lrn_rate = 0.0001
+            else:
+                self._lrn_rate = 0.00001
 
     # https://www.tensorflow.org/api_docs/python/tf/train/MonitoredSession
     with tf.train.MonitoredTrainingSession(
@@ -106,8 +104,7 @@ def train(hps):
 
 def evaluate(hps):
     """Eval loop."""
-    images, labels = cifar_input.build_input(
-        FLAGS.dataset, FLAGS.eval_data_path, hps.batch_size, FLAGS.mode)
+    images, labels = eeg_input.build_input(hps.batch_size, FLAGS.mode)
     model = resnet_model.ResNet(hps, images, labels, FLAGS.mode)
     model.build_graph()
     saver = tf.train.Saver()
@@ -118,6 +115,7 @@ def evaluate(hps):
 
     best_precision = 0.0
     while True:
+        # 加载模型
         try:
             ckpt_state = tf.train.get_checkpoint_state(FLAGS.log_root)
         except tf.errors.OutOfRangeError as e:
@@ -171,19 +169,16 @@ def main(_):
         raise ValueError('Only support 0 or 1 gpu.')
 
     if FLAGS.mode == 'train':
-        batch_size = 128
+        batch_size = 16
     elif FLAGS.mode == 'eval':
-        batch_size = 100
+        batch_size = 32
 
-    if FLAGS.dataset == 'cifar10':
-        num_classes = 10
-    elif FLAGS.dataset == 'cifar100':
-        num_classes = 100
+    num_classes = 58
 
     hps = resnet_model.HParams(batch_size=batch_size,
                                num_classes=num_classes,
                                min_lrn_rate=0.0001,
-                               lrn_rate=0.1,
+                               lrn_rate=0.01,
                                num_residual_units=2,
                                use_bottleneck=False,
                                weight_decay_rate=0.0002,

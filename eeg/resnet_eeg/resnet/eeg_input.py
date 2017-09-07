@@ -1,99 +1,82 @@
 import tensorflow as tf
+from scipy import io as sio
+import numpy as np
+
+DATA_PATH = 'F:/Deep Learning/eeg/resnet_eeg/eeg/'
 
 
-def build_input(data_path, batch_size, mode):
-    """Build image and labels.
+def loadEEGData():
+    X_train = sio.loadmat(DATA_PATH + 'train.mat')['train']
+    X_test = sio.loadmat(DATA_PATH + 'test.mat')['test']
+    y_train = sio.loadmat(DATA_PATH + 'train_labels.mat')['train_labels']
+    y_test = sio.loadmat(DATA_PATH + 'test_labels.mat')['test_labels']
 
-    Args:
-      data_path: Filename for data.
-      batch_size: Input batch size.
-      mode: Either 'train' or 'eval'.
-    Returns:
-      images: Batches of images. [batch_size, image_size, image_size, 1]
-      labels: Batches of labels. [batch_size, num_classes]
-    Raises:
-      ValueError: when the specified dataset is not supported.
-    """
-    image_size = 32
-    # if dataset == 'cifar10':
-    #     label_bytes = 1
-    #     label_offset = 0
-    #     num_classes = 10
-    # elif dataset == 'cifar100':
-    #     label_bytes = 1
-    #     label_offset = 1
-    #     num_classes = 100
-    # else:
-    #     raise ValueError('Not supported dataset %s', dataset)
+    # labels是从1到58，改成0到57
+    y_train = y_train - 1
+    y_test = y_test - 1
 
-    depth = 1
-    image_bytes = image_size * image_size * depth
-    record_bytes = label_bytes + label_offset + image_bytes
+    X_train = np.reshape(X_train, (-1, 32, 32, 1))
+    y_train = np.reshape(y_train, (-1,))
+    X_test = np.reshape(X_test, (-1, 32, 32, 1))
+    y_test = np.reshape(y_test, (-1,))
 
-    data_files = tf.gfile.Glob(data_path)
-    file_queue = tf.train.string_input_producer(data_files, shuffle=True)
-    # Read examples from files in the filename queue.
-    reader = tf.FixedLengthRecordReader(record_bytes=record_bytes)
-    _, value = reader.read(file_queue)
+    mean_image = np.mean(X_train, axis=0)
+    X_train -= mean_image
+    X_test -= mean_image
 
-    # Convert these examples to dense labels and processed images.
-    record = tf.reshape(tf.decode_raw(value, tf.uint8), [record_bytes])
-    label = tf.cast(tf.slice(record, [label_offset], [label_bytes]), tf.int32)
-    # Convert from string to [depth * height * width] to [depth, height, width].
-    depth_major = tf.reshape(tf.slice(record, [label_offset + label_bytes], [image_bytes]),
-                             [depth, image_size, image_size])
-    # Convert from [depth, height, width] to [height, width, depth].
-    image = tf.cast(tf.transpose(depth_major, [1, 2, 0]), tf.float32)
+    return X_train, y_train, X_test, y_test
+
+def build_input(batch_size, mode):
+    NUM_CLASS = 58
+    X_train, y_train, X_test, y_test = loadEEGData()
+    y_train -= 1
+    y_test -= 1
 
     if mode == 'train':
-        # 中心裁剪或0填充图片，使其成为36长宽的图片
-        image = tf.image.resize_image_with_crop_or_pad(
-            image, image_size + 4, image_size + 4)
-        # 把36变成32
-        image = tf.random_crop(image, [image_size, image_size, 3])
-        image = tf.image.random_flip_left_right(image)
-        # Brightness/saturation/constrast provides small gains .2%~.5% on cifar.
-        # image = tf.image.random_brightness(image, max_delta=63. / 255.)
-        # image = tf.image.random_saturation(image, lower=0.5, upper=1.5)
-        # image = tf.image.random_contrast(image, lower=0.2, upper=1.8)
-        image = tf.image.per_image_standardization(image)
+        print('X_trian.shape', X_train.shape)
+        print('y_train.shape', y_train.shape)
 
-        example_queue = tf.RandomShuffleQueue(
-            capacity=16 * batch_size,
-            min_after_dequeue=8 * batch_size,
-            dtypes=[tf.float32, tf.int32],
-            shapes=[[image_size, image_size, depth], [1]])
-        num_threads = 16
+        examples = tf.convert_to_tensor(X_train, dtype=tf.float32)
+        labels = tf.one_hot(indices=y_train, depth=NUM_CLASS)
     else:
-        image = tf.image.resize_image_with_crop_or_pad(
-            image, image_size, image_size)
-        image = tf.image.per_image_standardization(image)
+        print('X_test.shape', X_test.shape)
+        print('y_test.shape', y_test.shape)
 
-        example_queue = tf.FIFOQueue(
-            3 * batch_size,
-            dtypes=[tf.float32, tf.int32],
-            shapes=[[image_size, image_size, depth], [1]])
-        num_threads = 1
+        examples = tf.convert_to_tensor(X_test, dtype=tf.float32)
+        labels = tf.one_hot(indices=y_test, depth=NUM_CLASS)
 
-    example_enqueue_op = example_queue.enqueue([image, label])
-    tf.train.add_queue_runner(tf.train.queue_runner.QueueRunner(
-        example_queue, [example_enqueue_op] * num_threads))
+    dataset = tf.contrib.data.Dataset.from_tensor_slices((examples, labels))
+    print(dataset.output_shapes)
 
-    # Read 'batch' labels + images from the example queue.
-    images, labels = example_queue.dequeue_many(batch_size)
-    labels = tf.reshape(labels, [batch_size, 1])
-    indices = tf.reshape(tf.range(0, batch_size, 1), [batch_size, 1])
-    labels = tf.sparse_to_dense(
-        tf.concat(values=[indices, labels], axis=1),
-        [batch_size, num_classes], 1.0, 0.0)
+    dataset = dataset.shuffle(buffer_size=1000)
+    dataset = dataset.batch(batch_size)
+    dataset = dataset.repeat()
+    iterator = dataset.make_one_shot_iterator()
 
-    assert len(images.get_shape()) == 4
-    assert images.get_shape()[0] == batch_size
-    assert images.get_shape()[-1] == 3
-    assert len(labels.get_shape()) == 2
-    assert labels.get_shape()[0] == batch_size
-    assert labels.get_shape()[1] == num_classes
+    next_examples, next_labels = iterator.get_next()
+    return next_examples, next_labels
 
-    # Display the training images in the visualizer.
-    tf.summary.image('images', images)
-    return images, labels
+# X_train, y_train, X_test, y_test = loadEEGData()
+# print('X_trian.shape', X_train.shape)
+# print('y_train.shape', y_train.shape)
+#
+# y_train -= 1
+# X_train = tf.convert_to_tensor(X_train, dtype=tf.float32)
+# y_train = tf.convert_to_tensor(y_train, dtype=tf.int32)
+#
+# trainset = tf.contrib.data.Dataset.from_tensor_slices((X_train, y_train))
+# print(trainset.output_shapes)
+#
+# trainset = trainset.shuffle(buffer_size=1000)
+# trainset = trainset.batch(4)
+# trainset = trainset.repeat()
+# iterator = trainset.make_one_shot_iterator()
+#
+# next_examples, next_labels = iterator.get_next()
+#
+# count = 0
+# with tf.train.MonitoredTrainingSession() as sess:
+#     x, y = sess.run([next_examples, next_labels])
+#     # print(sess.run([next_examples, next_labels]))
+#     print(tf.shape(x))
+#     print(tf.shape(y))
