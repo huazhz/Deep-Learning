@@ -12,6 +12,11 @@ layer {
   }
 }
 
+####一些细节####
+# 1. 所有卷积都做了扩边处理（pad=1），导致Conv layers中的conv层不改变输入和输出矩阵大小
+# 2. 4次max pooling，每次特征图的长宽都变为原来的一半，到最后长宽变为最初的1/16
+
+# conv1_1 + relu1_1
 layer {
   name: "conv1_1"
   type: "Convolution"
@@ -37,6 +42,7 @@ layer {
   bottom: "conv1_1"
   top: "conv1_1"
 }
+# conv1_2 + relu1_2
 layer {
   name: "conv1_2"
   type: "Convolution"
@@ -62,6 +68,7 @@ layer {
   bottom: "conv1_2"
   top: "conv1_2"
 }
+# pool1
 layer {
   name: "pool1"
   type: "Pooling"
@@ -73,6 +80,8 @@ layer {
     stride: 2
   }
 }
+
+# (conv2 + relu2)*2 + pool2
 layer {
   name: "conv2_1"
   type: "Convolution"
@@ -134,6 +143,8 @@ layer {
     stride: 2
   }
 }
+
+# (conv3 + relu3)*3 + pool3
 layer {
   name: "conv3_1"
   type: "Convolution"
@@ -214,6 +225,8 @@ layer {
     stride: 2
   }
 }
+
+# (conv4 + relu4)*3 + pool4
 layer {
   name: "conv4_1"
   type: "Convolution"
@@ -294,6 +307,8 @@ layer {
     stride: 2
   }
 }
+
+# (conv5 + relu5)*3
 layer {
   name: "conv5_1"
   type: "Convolution"
@@ -366,6 +381,8 @@ layer {
 
 #========= RPN ============
 
+# rpn_conv + rpn_relu
+# 这个卷积没改变卷积核数量，只是3*3卷积又融合了周围的一些信息，这样可能更鲁棒
 layer {
   name: "rpn_conv/3x3"
   type: "Convolution"
@@ -387,6 +404,10 @@ layer {
   top: "rpn/output"
 }
 
+# rpn_output后分了两条线，这是第一条线
+# 将W*H*512的特征图变为W*H*18的特征图
+# 相当于每一个512维的向量对应了9个anchor，这9个anchor又分前景和背景
+# top: "rpn_cls_score"
 layer {
   name: "rpn_cls_score"
   type: "Convolution"
@@ -402,6 +423,9 @@ layer {
   }
 }
 
+# 这是第二条线
+# rpn/output: N*512*H*W
+# rpn_bbox_pred: 这是预测出的9个anchors的位置信息
 layer {
   name: "rpn_bbox_pred"
   type: "Convolution"
@@ -417,6 +441,9 @@ layer {
   }
 }
 
+# reshape 这样做是便于softmax做二分类
+# rpn_cls_score: N*18*H*W
+# rpn_cls_score_reshape: N*2*(9H)*W
 layer {
    bottom: "rpn_cls_score"
    top: "rpn_cls_score_reshape"
@@ -425,6 +452,8 @@ layer {
    reshape_param { shape { dim: 0 dim: 2 dim: -1 dim: 0 } }
 }
 
+# 为每一个点都配备9种anchors作为初始的检测框
+# 这样做获得检测框很不准确，后面还有2次bounding box regression可以修正检测框位置
 layer {
   name: 'rpn-data'
   type: 'Python'
@@ -443,13 +472,14 @@ layer {
   }
 }
 
+# 分类任务的loss
 layer {
   name: "rpn_loss_cls"
   type: "SoftmaxWithLoss"
   bottom: "rpn_cls_score_reshape"
   bottom: "rpn_labels"
   propagate_down: 1
-  propagate_down: 0
+  propagate_down: 0		# rpn_labels不需要反向更新
   top: "rpn_cls_loss"
   loss_weight: 1
   loss_param {
@@ -458,6 +488,7 @@ layer {
   }
 }
 
+# bounding box loss
 layer {
   name: "rpn_loss_bbox"
   type: "SmoothL1Loss"
