@@ -10,14 +10,39 @@ import resnet_model
 import tensorflow as tf
 
 FLAGS = tf.app.flags.FLAGS
-# tf.app.flags.DEFINE_string('mode', 'train', 'train or eval.')
-tf.app.flags.DEFINE_string('mode', 'eval', 'train or eval.')
+tf.app.flags.DEFINE_string('mode', 'train', 'train or eval.')
+# tf.app.flags.DEFINE_string('mode', 'eval', 'train or eval.')
 
 tf.app.flags.DEFINE_integer('image_size', 32, 'Image side length.')
 
-tf.app.flags.DEFINE_string('train_dir', '../log/train',
+# tf.app.flags.DEFINE_string('train_dir', '../log/train',
+#                            'Directory to keep training outputs.')
+# tf.app.flags.DEFINE_string('eval_dir', '../log/eval',
+#                            'Directory to keep eval outputs.')
+# 实验2保存的log
+# tf.app.flags.DEFINE_string('train_dir', '../log2/train',
+#                            'Directory to keep training outputs.')
+# tf.app.flags.DEFINE_string('eval_dir', '../log2/eval',
+#                            'Directory to keep eval outputs.')
+# 实验3：减少网络层数
+# tf.app.flags.DEFINE_string('train_dir', '../log3/train',
+#                            'Directory to keep training outputs.')
+# tf.app.flags.DEFINE_string('eval_dir', '../log3/eval',
+#                            'Directory to keep eval outputs.')
+# 实验4：num_residual_units = 2--> 3
+# tf.app.flags.DEFINE_string('train_dir', '../log4/train',
+#                            'Directory to keep training outputs.')
+# tf.app.flags.DEFINE_string('eval_dir', '../log4/eval',
+#                            'Directory to keep eval outputs.')
+# 实验5：用第一个数据集num_residual_units = 3实验
+# tf.app.flags.DEFINE_string('train_dir', '../log5/train',
+#                            'Directory to keep training outputs.')
+# tf.app.flags.DEFINE_string('eval_dir', '../log5/eval',
+#                            'Directory to keep eval outputs.')
+# 实验6：用第二个数据集，num_residual_units = 4实验
+tf.app.flags.DEFINE_string('train_dir', '../log6/train',
                            'Directory to keep training outputs.')
-tf.app.flags.DEFINE_string('eval_dir', '../log/eval',
+tf.app.flags.DEFINE_string('eval_dir', '../log6/eval',
                            'Directory to keep eval outputs.')
 
 tf.app.flags.DEFINE_integer('eval_batch_count', 50,
@@ -25,7 +50,22 @@ tf.app.flags.DEFINE_integer('eval_batch_count', 50,
 tf.app.flags.DEFINE_bool('eval_once', False,
                          'Whether evaluate the model only once.')
 
-tf.app.flags.DEFINE_string('log_root', '../log',
+# tf.app.flags.DEFINE_string('log_root', '../log',
+#                            'Directory to keep the checkpoints. Should be a '
+#                            'parent directory of FLAGS.train_dir/eval_dir.')
+# tf.app.flags.DEFINE_string('log_root', '../log2',
+#                            'Directory to keep the checkpoints. Should be a '
+#                            'parent directory of FLAGS.train_dir/eval_dir.')
+# tf.app.flags.DEFINE_string('log_root', '../log3',
+#                            'Directory to keep the checkpoints. Should be a '
+#                            'parent directory of FLAGS.train_dir/eval_dir.')
+# tf.app.flags.DEFINE_string('log_root', '../log4',
+#                            'Directory to keep the checkpoints. Should be a '
+#                            'parent directory of FLAGS.train_dir/eval_dir.')
+# tf.app.flags.DEFINE_string('log_root', '../log5',
+#                            'Directory to keep the checkpoints. Should be a '
+#                            'parent directory of FLAGS.train_dir/eval_dir.')
+tf.app.flags.DEFINE_string('log_root', '../log6',
                            'Directory to keep the checkpoints. Should be a '
                            'parent directory of FLAGS.train_dir/eval_dir.')
 
@@ -80,9 +120,9 @@ def train(hps):
             # The run_values argument contains results of
             # requested ops/tensors by before_run().
             train_step = run_values.results
-            if train_step < 4000:
+            if train_step < 2000:
                 self._lrn_rate = 0.01
-            elif train_step < 6000:
+            elif train_step < 4000:
                 self._lrn_rate = 0.001
             elif train_step < 8000:
                 self._lrn_rate = 0.0001
@@ -179,7 +219,7 @@ def main(_):
                                num_classes=num_classes,
                                min_lrn_rate=0.0001,
                                lrn_rate=0.01,
-                               num_residual_units=2,
+                               num_residual_units=4,
                                use_bottleneck=False,
                                weight_decay_rate=0.0002,
                                relu_leakiness=0.1,

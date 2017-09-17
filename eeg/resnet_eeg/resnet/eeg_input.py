@@ -2,14 +2,21 @@ import tensorflow as tf
 from scipy import io as sio
 import numpy as np
 
-DATA_PATH = 'F:/Deep Learning/eeg/resnet_eeg/eeg/'
+# 实验1的数据：将stft变换后的数据从上、从下各取32行，作为两个样本，数据量是原来的两倍
+DATA_PATH1 = 'F:/Deep Learning/eeg/resnet_eeg/resnet_data1/'
+
+# 实验2的数据：将stft变换后的数据从第一行开始截取32行
+DATA_PATH2 = 'F:/Deep Learning/eeg/resnet_eeg/resnet_data2/'
+
+# 当前实验所用数据
+CURRENT_DATA = DATA_PATH2
 
 
-def loadEEGData():
-    X_train = sio.loadmat(DATA_PATH + 'train.mat')['train']
-    X_test = sio.loadmat(DATA_PATH + 'test.mat')['test']
-    y_train = sio.loadmat(DATA_PATH + 'train_labels.mat')['train_labels']
-    y_test = sio.loadmat(DATA_PATH + 'test_labels.mat')['test_labels']
+def loadEEGData(data_path=CURRENT_DATA):
+    X_train = sio.loadmat(data_path + 'train.mat')['train']
+    X_test = sio.loadmat(data_path + 'test.mat')['test']
+    y_train = sio.loadmat(data_path + 'train_labels.mat')['train_labels']
+    y_test = sio.loadmat(data_path + 'test_labels.mat')['test_labels']
 
     # labels是从1到58，改成0到57
     y_train = y_train - 1
