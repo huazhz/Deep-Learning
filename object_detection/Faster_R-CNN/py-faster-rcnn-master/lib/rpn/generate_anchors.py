@@ -34,19 +34,25 @@ import numpy as np
 #       [ -79., -167.,   96.,  184.],
 #       [-167., -343.,  184.,  360.]])
 
+# 这个文件就是用于生成9个anchors，这9个anchors的长宽比ratios=[0.5, 1, 2]
+# anchor的基本大小是16*16，scales=[8, 16, 32], 缩放之后的anchors大小分别是[128, 256, 512]
+# 遍历Conv layers计算获得的feature maps，为每一个点都配备这9种anchors作为初始的检测框
+# 这样做获得检测框很不准确，不用担心，后面还有2次bounding box regression可以修正检测框位置。
 def generate_anchors(base_size=16, ratios=[0.5, 1, 2],
                      scales=2**np.arange(3, 6)):
     """
     Generate anchor (reference) windows by enumerating aspect ratios X
     scales wrt a reference (0, 0, 15, 15) window.
     """
-
-    base_anchor = np.array([1, 1, base_size, base_size]) - 1
+    # (0, 0, 15, 15)
+    base_anchor = np.array([1, 1, base_size, base_size]) - 1       
+    
     ratio_anchors = _ratio_enum(base_anchor, ratios)
     anchors = np.vstack([_scale_enum(ratio_anchors[i, :], scales)
-                         for i in xrange(ratio_anchors.shape[0])])
+                         for i in range(ratio_anchors.shape[0])])
     return anchors
 
+# 返回传入的anchor的：宽度、长度、x中心坐标、y中心坐标
 def _whctrs(anchor):
     """
     Return width, height, x center, and y center for an anchor (window).
@@ -64,6 +70,7 @@ def _mkanchors(ws, hs, x_ctr, y_ctr):
     (x_ctr, y_ctr), output a set of anchors (windows).
     """
 
+    # 增加一维
     ws = ws[:, np.newaxis]
     hs = hs[:, np.newaxis]
     anchors = np.hstack((x_ctr - 0.5 * (ws - 1),
@@ -78,9 +85,16 @@ def _ratio_enum(anchor, ratios):
     """
 
     w, h, x_ctr, y_ctr = _whctrs(anchor)
-    size = w * h
+
+    # 225
+    size = w * h    
+    # 225 / [0.5, 1, 2] = [ 450. ,  225. ,  112.5]
     size_ratios = size / ratios
+
+    # np.round: 四舍五入，默认到整数位
+    # [ 21.,  15.,  11.]
     ws = np.round(np.sqrt(size_ratios))
+    # [ 10.,  15.,  22.]
     hs = np.round(ws * ratios)
     anchors = _mkanchors(ws, hs, x_ctr, y_ctr)
     return anchors
@@ -100,6 +114,6 @@ if __name__ == '__main__':
     import time
     t = time.time()
     a = generate_anchors()
-    print time.time() - t
-    print a
+    print(time.time() - t)
+    print(a)
     from IPython import embed; embed()

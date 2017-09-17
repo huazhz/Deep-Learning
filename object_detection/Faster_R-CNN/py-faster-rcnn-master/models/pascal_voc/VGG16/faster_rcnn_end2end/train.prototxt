@@ -381,6 +381,8 @@ layer {
 
 #========= RPN ============
 
+# 四次池化之后，H、W是原图像大小的1/16
+
 # rpn_conv + rpn_relu
 # 这个卷积没改变卷积核数量，只是3*3卷积又融合了周围的一些信息，这样可能更鲁棒
 layer {
@@ -404,6 +406,7 @@ layer {
   top: "rpn/output"
 }
 
+# cls layer
 # rpn_output后分了两条线，这是第一条线
 # 将W*H*512的特征图变为W*H*18的特征图
 # 相当于每一个512维的向量对应了9个anchor，这9个anchor又分前景和背景
@@ -413,6 +416,9 @@ layer {
   type: "Convolution"
   bottom: "rpn/output"
   top: "rpn_cls_score"
+  # lr_mult: 学习率的系数，最终的学习率是这个数乘以solver.prototxt配置文件中的base_lr
+  # 如果有两个lr_mult, 则第一个表示权值的学习率，第二个表示偏置项的学习率
+  # 一般偏置项的学习率是权值学习率的两倍
   param { lr_mult: 1.0 }
   param { lr_mult: 2.0 }
   convolution_param {
@@ -423,6 +429,7 @@ layer {
   }
 }
 
+# reg layer
 # 这是第二条线
 # rpn/output: N*512*H*W
 # rpn_bbox_pred: 这是预测出的9个anchors的位置信息
@@ -561,6 +568,9 @@ layer {
     param_str: "'num_classes': 21"
   }
 }
+
+# RPN：生成anchors -> softmax分类器提取fg anchors -> bbox reg回归fg anchors 
+# 	   -> Proposal Layer生成proposals
 
 #========= RCNN ============
 
