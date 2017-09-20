@@ -449,8 +449,8 @@ layer {
 }
 
 # reshape 这样做是便于softmax做二分类
-# rpn_cls_score: N*18*H*W
-# rpn_cls_score_reshape: N*2*(9H)*W
+# rpn_cls_score: 1*18*H*W
+# rpn_cls_score_reshape: 1*2*(9H)*W
 layer {
    bottom: "rpn_cls_score"
    top: "rpn_cls_score_reshape"
@@ -461,6 +461,7 @@ layer {
 
 # 为每一个点都配备9种anchors作为初始的检测框
 # 这样做获得检测框很不准确，后面还有2次bounding box regression可以修正检测框位置
+# rpn_labels是对有所不越界的anchors进行标记（1,0,-1）
 layer {
   name: 'rpn-data'
   type: 'Python'
@@ -480,6 +481,8 @@ layer {
 }
 
 # 分类任务的loss
+# rpn_cls_score_reshape: 1*2*(A*H)*W
+# labels.reshape((1, 1, A * height, width))
 layer {
   name: "rpn_loss_cls"
   type: "SoftmaxWithLoss"
@@ -496,6 +499,8 @@ layer {
 }
 
 # bounding box loss
+# 正样本inside_weights为1，其余为0（等同于论文中的pi*）
+# outside_weights是bbox回归时那个要求的参数
 layer {
   name: "rpn_loss_bbox"
   type: "SmoothL1Loss"

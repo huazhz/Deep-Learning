@@ -2,14 +2,11 @@ import tensorflow as tf
 from scipy import io as sio
 import numpy as np
 
-# 实验1的数据：将stft变换后的数据从上、从下各取32行，作为两个样本，数据量是原来的两倍
-DATA_PATH1 = 'F:/Deep Learning/eeg/resnet_eeg/resnet_data1/'
+# resnet_ensemble1
+DATA_PATH1 = 'F:/Deep Learning/eeg/resnet_ensemble/dataset/resnet_ensemble1/'
 
 # 实验2的数据：将stft变换后的数据从第一行开始截取32行
-DATA_PATH2 = 'F:/Deep Learning/eeg/resnet_eeg/resnet_data2/'
-
-# 实验3的数据：将stft变换后的数据从第14行开始截取32行
-DATA_PATH3 = 'F:/Deep Learning/eeg/resnet_eeg/resnet_data3/'
+DATA_PATH2 = 'F:/Deep Learning/eeg/resnet_ensemble/dataset/resnet_ensemble2/'
 
 # 当前实验所用数据
 CURRENT_DATA = DATA_PATH2

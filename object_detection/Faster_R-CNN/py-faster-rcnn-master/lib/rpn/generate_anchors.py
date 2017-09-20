@@ -7,6 +7,7 @@
 
 import numpy as np
 
+# 每个anchor返回的都是左上角和右下角的坐标
 # Verify that we compute the same anchors as Shaoqing's matlab implementation:
 #
 #    >> load output/rpn_cachedir/faster_rcnn_VOC2007_ZF_stage1_rpn/anchors.mat
