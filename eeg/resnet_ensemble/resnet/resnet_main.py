@@ -15,94 +15,26 @@ tf.app.flags.DEFINE_string('mode', 'eval', 'train or eval.')
 
 tf.app.flags.DEFINE_integer('image_size', 32, 'Image side length.')
 
-# tf.app.flags.DEFINE_string('train_dir', '../log/train',
-#                            'Directory to keep training outputs.')
-# tf.app.flags.DEFINE_string('eval_dir', '../log/eval',
-#                            'Directory to keep eval outputs.')
-# 实验2保存的log
-# tf.app.flags.DEFINE_string('train_dir', '../log2/train',
-#                            'Directory to keep training outputs.')
-# tf.app.flags.DEFINE_string('eval_dir', '../log2/eval',
-#                            'Directory to keep eval outputs.')
-# 实验3：减少网络层数
-# tf.app.flags.DEFINE_string('train_dir', '../log3/train',
-#                            'Directory to keep training outputs.')
-# tf.app.flags.DEFINE_string('eval_dir', '../log3/eval',
-#                            'Directory to keep eval outputs.')
-# 实验4：num_residual_units = 2--> 3
-# tf.app.flags.DEFINE_string('train_dir', '../log4/train',
-#                            'Directory to keep training outputs.')
-# tf.app.flags.DEFINE_string('eval_dir', '../log4/eval',
-#                            'Directory to keep eval outputs.')
-# 实验5：用第一个数据集num_residual_units = 3实验
-# tf.app.flags.DEFINE_string('train_dir', '../log5/train',
-#                            'Directory to keep training outputs.')
-# tf.app.flags.DEFINE_string('eval_dir', '../log5/eval',
-#                            'Directory to keep eval outputs.')
-# 实验6：用第二个数据集，num_residual_units = 4实验
-# tf.app.flags.DEFINE_string('train_dir', '../log6/train',
-#                            'Directory to keep training outputs.')
-# tf.app.flags.DEFINE_string('eval_dir', '../log6/eval',
-#                            'Directory to keep eval outputs.')
-# 实验7：用第三个数据集，num_residual_units = 4实验
-# tf.app.flags.DEFINE_string('train_dir', '../log7/train',
-#                            'Directory to keep training outputs.')
-# tf.app.flags.DEFINE_string('eval_dir', '../log7/eval',
-#                            'Directory to keep eval outputs.')
-# 实验8：用第二个数据集，num_residual_units = 5实验
-# tf.app.flags.DEFINE_string('train_dir', '../log8/train',
-#                            'Directory to keep training outputs.')
-# tf.app.flags.DEFINE_string('eval_dir', '../log8/eval',
-#                            'Directory to keep eval outputs.')
-# 实验9：用第二个数据集，num_residual_units = 5实验 batchsize=16
-tf.app.flags.DEFINE_string('train_dir', '../log9/train',
+# ensemble1's log
+tf.app.flags.DEFINE_string('log_root', '../log_1',
+                           'Directory to keep the checkpoints. Should be a '
+                           'parent directory of FLAGS.train_dir/eval_dir.')
+tf.app.flags.DEFINE_string('train_dir', '../log_1/train',
                            'Directory to keep training outputs.')
-tf.app.flags.DEFINE_string('eval_dir', '../log9/eval',
+tf.app.flags.DEFINE_string('eval_dir', '../log_1/eval',
                            'Directory to keep eval outputs.')
 
-tf.app.flags.DEFINE_integer('eval_batch_count', 50,
+tf.app.flags.DEFINE_integer('eval_batch_count', 30,
                             'Number of batches to eval.')
 tf.app.flags.DEFINE_bool('eval_once', False,
                          'Whether evaluate the model only once.')
 
-# tf.app.flags.DEFINE_string('log_root', '../log',
-#                            'Directory to keep the checkpoints. Should be a '
-#                            'parent directory of FLAGS.train_dir/eval_dir.')
-# tf.app.flags.DEFINE_string('log_root', '../log2',
-#                            'Directory to keep the checkpoints. Should be a '
-#                            'parent directory of FLAGS.train_dir/eval_dir.')
-# tf.app.flags.DEFINE_string('log_root', '../log3',
-#                            'Directory to keep the checkpoints. Should be a '
-#                            'parent directory of FLAGS.train_dir/eval_dir.')
-# tf.app.flags.DEFINE_string('log_root', '../log4',
-#                            'Directory to keep the checkpoints. Should be a '
-#                            'parent directory of FLAGS.train_dir/eval_dir.')
-# tf.app.flags.DEFINE_string('log_root', '../log5',
-#                            'Directory to keep the checkpoints. Should be a '
-#                            'parent directory of FLAGS.train_dir/eval_dir.')
-# tf.app.flags.DEFINE_string('log_root', '../log6',
-#                            'Directory to keep the checkpoints. Should be a '
-#                            'parent directory of FLAGS.train_dir/eval_dir.')
-# tf.app.flags.DEFINE_string('log_root', '../log7',
-#                            'Directory to keep the checkpoints. Should be a '
-#                            'parent directory of FLAGS.train_dir/eval_dir.')
-# tf.app.flags.DEFINE_string('log_root', '../log8',
-#                            'Directory to keep the checkpoints. Should be a '
-#                            'parent directory of FLAGS.train_dir/eval_dir.')
-tf.app.flags.DEFINE_string('log_root', '../log9',
-                           'Directory to keep the checkpoints. Should be a '
-                           'parent directory of FLAGS.train_dir/eval_dir.')
-
 tf.app.flags.DEFINE_integer('num_gpus', 0,
                             'Number of gpus used for training. (0 or 1)')
-
 
 def train(hps):
     """Training loop."""
 
-    # TODO:将这个build_input函数改成返回Dataset.get_next()
-    # 如果可行的话，应该在每次run train_op 的时候，都会自动的取batch个数据
-    # 现在疑惑的地方就是，这么定义images和labels，每次run的时候会不会自动取数据
     images, labels = eeg_input.build_input(hps.batch_size, FLAGS.mode)
     model = resnet_model.ResNet(hps, images, labels, FLAGS.mode)
     model.build_graph()
@@ -118,9 +50,11 @@ def train(hps):
         output_dir=FLAGS.train_dir,
         # 把构建模型时的summary和记录precision的summary合并
         summary_op=tf.summary.merge([model.summaries,
-                                     tf.summary.scalar('Precision', precision)]))
+                                     tf.summary.scalar('Precision', precision)])
+    )
 
     # Prints the given tensors every N local steps, every N seconds, or at end.
+    # 每100次迭代log一次
     logging_hook = tf.train.LoggingTensorHook(
         tensors={'step': model.global_step,
                  'loss': model.cost,
@@ -144,9 +78,9 @@ def train(hps):
             # The run_values argument contains results of
             # requested ops/tensors by before_run().
             train_step = run_values.results
-            if train_step < 2000:
+            if train_step < 3000:
                 self._lrn_rate = 0.01
-            elif train_step < 4000:
+            elif train_step < 5000:
                 self._lrn_rate = 0.001
             elif train_step < 8000:
                 self._lrn_rate = 0.0001
@@ -162,8 +96,16 @@ def train(hps):
             # SummarySaverHook. To do that we set save_summaries_steps to 0.
             save_summaries_steps=0,
             config=tf.ConfigProto(allow_soft_placement=True)) as mon_sess:
+        count = 0
         while not mon_sess.should_stop():
             mon_sess.run(model.train_op)
+            if count % 100 == 0:
+                tf.logging.info("count: %d", count)
+            count += 1
+            # 每1000次迭代，停下来测一次准确率
+            if count == 1000:
+                mon_sess.close()
+                break
 
 
 def evaluate(hps):

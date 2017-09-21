@@ -5,11 +5,11 @@ import numpy as np
 # resnet_ensemble1
 DATA_PATH1 = 'F:/Deep Learning/eeg/resnet_ensemble/dataset/resnet_ensemble1/'
 
-# 实验2的数据：将stft变换后的数据从第一行开始截取32行
+# resnet_ensemble2
 DATA_PATH2 = 'F:/Deep Learning/eeg/resnet_ensemble/dataset/resnet_ensemble2/'
 
 # 当前实验所用数据
-CURRENT_DATA = DATA_PATH2
+CURRENT_DATA = DATA_PATH1
 
 
 def loadEEGData(data_path=CURRENT_DATA):
@@ -62,28 +62,3 @@ def build_input(batch_size, mode):
 
     next_examples, next_labels = iterator.get_next()
     return next_examples, next_labels
-
-# X_train, y_train, X_test, y_test = loadEEGData()
-# print('X_trian.shape', X_train.shape)
-# print('y_train.shape', y_train.shape)
-#
-# y_train -= 1
-# X_train = tf.convert_to_tensor(X_train, dtype=tf.float32)
-# y_train = tf.convert_to_tensor(y_train, dtype=tf.int32)
-#
-# trainset = tf.contrib.data.Dataset.from_tensor_slices((X_train, y_train))
-# print(trainset.output_shapes)
-#
-# trainset = trainset.shuffle(buffer_size=1000)
-# trainset = trainset.batch(4)
-# trainset = trainset.repeat()
-# iterator = trainset.make_one_shot_iterator()
-#
-# next_examples, next_labels = iterator.get_next()
-#
-# count = 0
-# with tf.train.MonitoredTrainingSession() as sess:
-#     x, y = sess.run([next_examples, next_labels])
-#     # print(sess.run([next_examples, next_labels]))
-#     print(tf.shape(x))
-#     print(tf.shape(y))
