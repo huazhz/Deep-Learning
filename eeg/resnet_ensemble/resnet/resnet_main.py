@@ -16,12 +16,28 @@ tf.app.flags.DEFINE_string('mode', 'eval', 'train or eval.')
 tf.app.flags.DEFINE_integer('image_size', 32, 'Image side length.')
 
 # ensemble1's log
-tf.app.flags.DEFINE_string('log_root', '../log_1',
+# tf.app.flags.DEFINE_string('log_root', '../log_1',
+#                            'Directory to keep the checkpoints. Should be a '
+#                            'parent directory of FLAGS.train_dir/eval_dir.')
+# tf.app.flags.DEFINE_string('train_dir', '../log_1/train',
+#                            'Directory to keep training outputs.')
+# tf.app.flags.DEFINE_string('eval_dir', '../log_1/eval',
+#                            'Directory to keep eval outputs.')
+# ensemble2's log
+# tf.app.flags.DEFINE_string('log_root', '../log_2',
+#                            'Directory to keep the checkpoints. Should be a '
+#                            'parent directory of FLAGS.train_dir/eval_dir.')
+# tf.app.flags.DEFINE_string('train_dir', '../log_2/train',
+#                            'Directory to keep training outputs.')
+# tf.app.flags.DEFINE_string('eval_dir', '../log_2/eval',
+#                            'Directory to keep eval outputs.')
+# ensemble3's log
+tf.app.flags.DEFINE_string('log_root', '../log_4',
                            'Directory to keep the checkpoints. Should be a '
                            'parent directory of FLAGS.train_dir/eval_dir.')
-tf.app.flags.DEFINE_string('train_dir', '../log_1/train',
+tf.app.flags.DEFINE_string('train_dir', '../log_4/train',
                            'Directory to keep training outputs.')
-tf.app.flags.DEFINE_string('eval_dir', '../log_1/eval',
+tf.app.flags.DEFINE_string('eval_dir', '../log_4/eval',
                            'Directory to keep eval outputs.')
 
 tf.app.flags.DEFINE_integer('eval_batch_count', 30,
@@ -80,7 +96,7 @@ def train(hps):
             train_step = run_values.results
             if train_step < 3000:
                 self._lrn_rate = 0.01
-            elif train_step < 5000:
+            elif train_step < 6000:
                 self._lrn_rate = 0.001
             elif train_step < 8000:
                 self._lrn_rate = 0.0001
@@ -103,7 +119,7 @@ def train(hps):
                 tf.logging.info("count: %d", count)
             count += 1
             # 每1000次迭代，停下来测一次准确率
-            if count == 1000:
+            if count == 5000:
                 mon_sess.close()
                 break
 
@@ -185,7 +201,7 @@ def main(_):
                                num_classes=num_classes,
                                min_lrn_rate=0.0001,
                                lrn_rate=0.01,
-                               num_residual_units=4,
+                               num_residual_units=3,
                                use_bottleneck=False,
                                weight_decay_rate=0.0002,
                                relu_leakiness=0.1,
