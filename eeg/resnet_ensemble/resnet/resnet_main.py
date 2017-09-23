@@ -119,7 +119,7 @@ def train(hps):
                 tf.logging.info("count: %d", count)
             count += 1
             # 每1000次迭代，停下来测一次准确率
-            if count == 3000:
+            if count == 2000:
                 mon_sess.close()
                 break
 
