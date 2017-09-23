@@ -10,8 +10,8 @@ import resnet_model
 import tensorflow as tf
 
 FLAGS = tf.app.flags.FLAGS
-# tf.app.flags.DEFINE_string('mode', 'train', 'train or eval.')
-tf.app.flags.DEFINE_string('mode', 'eval', 'train or eval.')
+tf.app.flags.DEFINE_string('mode', 'train', 'train or eval.')
+# tf.app.flags.DEFINE_string('mode', 'eval', 'train or eval.')
 
 tf.app.flags.DEFINE_integer('image_size', 32, 'Image side length.')
 
@@ -32,12 +32,12 @@ tf.app.flags.DEFINE_integer('image_size', 32, 'Image side length.')
 # tf.app.flags.DEFINE_string('eval_dir', '../log_2/eval',
 #                            'Directory to keep eval outputs.')
 # ensemble3's log
-tf.app.flags.DEFINE_string('log_root', '../log_4',
+tf.app.flags.DEFINE_string('log_root', '../log_5',
                            'Directory to keep the checkpoints. Should be a '
                            'parent directory of FLAGS.train_dir/eval_dir.')
-tf.app.flags.DEFINE_string('train_dir', '../log_4/train',
+tf.app.flags.DEFINE_string('train_dir', '../log_5/train',
                            'Directory to keep training outputs.')
-tf.app.flags.DEFINE_string('eval_dir', '../log_4/eval',
+tf.app.flags.DEFINE_string('eval_dir', '../log_5/eval',
                            'Directory to keep eval outputs.')
 
 tf.app.flags.DEFINE_integer('eval_batch_count', 30,
@@ -119,7 +119,7 @@ def train(hps):
                 tf.logging.info("count: %d", count)
             count += 1
             # 每1000次迭代，停下来测一次准确率
-            if count == 5000:
+            if count == 3000:
                 mon_sess.close()
                 break
 
@@ -201,7 +201,7 @@ def main(_):
                                num_classes=num_classes,
                                min_lrn_rate=0.0001,
                                lrn_rate=0.01,
-                               num_residual_units=3,
+                               num_residual_units=4,
                                use_bottleneck=False,
                                weight_decay_rate=0.0002,
                                relu_leakiness=0.1,

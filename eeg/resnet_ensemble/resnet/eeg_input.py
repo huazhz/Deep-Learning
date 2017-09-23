@@ -14,8 +14,11 @@ DATA_PATH3 = 'F:/Deep Learning/eeg/resnet_ensemble/dataset/resnet_ensemble3/'
 # resnet_ensemble4
 DATA_PATH4 = 'F:/Deep Learning/eeg/resnet_ensemble/dataset/resnet_ensemble4/'
 
+# resnet_ensemble5
+DATA_PATH5 = 'F:/Deep Learning/eeg/resnet_ensemble/dataset/resnet_downsample/'
+
 # 当前实验所用数据
-CURRENT_DATA = DATA_PATH4
+CURRENT_DATA = DATA_PATH5
 
 
 def loadEEGData(data_path=CURRENT_DATA):
