@@ -183,22 +183,48 @@ def cbow(currentWord, C, contextWords, tokens, inputVectors, outputVectors,
          dataset, word2vecCostAndGradient=softmaxCostAndGradient):
     """CBOW model in word2vec
 
-    Implement the continuous bag-of-words model in this function.
-
     Arguments/Return specifications: same as the skip-gram model
 
-    Extra credit: Implementing CBOW is optional, but the gradient
-    derivations are not. If you decide not to implement CBOW, remove
-    the NotImplementedError.
+    cbow模型是根据contextWords预测currentWord
+
+    将contextWords中的每个词转成one-hot向量，计算hidden layer结果，然后将结果平均
+    用平均之后的结果得到最后的output
+    inputVectors -- [V,n]  "input" word vectors (as rows) for all tokens
+    outputVectors -- [V,n]  "output" word vectors (as rows) for all tokens
+
+    softmaxCostAndGradient(predicted, target, outputVectors, dataset)
+
     """
+
 
     cost = 0.0
     gradIn = np.zeros(inputVectors.shape)
     gradOut = np.zeros(outputVectors.shape)
 
-    ### YOUR CODE HERE
-    raise NotImplementedError
-    ### END YOUR CODE
+    V, n = inputVectors.shape
+
+    # 中心词在索引中的下标
+    currentWordIndex = tokens[currentWord]
+    # 上下文在索引中的下标列表
+    contextWordsIndices = [tokens[contextWords[i]] for i in range(len(contextWords))]
+    # 上下文的one-hot向量
+    contextWordsVec = np.zeros((2*C,V))
+    contextWordsVec[range(2*C), contextWordsIndices] = 1
+
+    # hidden layer的结果
+    predicted = np.zeros((1,n))
+    # 所有contextVec的平均值
+    inputVec = np.zeros((1,V))
+    for i in range(2*C):
+        inputVec += contextWordsVec[i,:]
+        currentPred = np.dot(contextWordsVec[i,:], inputVectors)
+        predicted += currentPred
+    predicted /= (2*C)
+    inputVec /= (2*C)
+
+    cost, gradPred, gradOut = \
+        word2vecCostAndGradient(predicted=predicted, target=currentWordIndex, outputVectors=outputVectors, dataset=None)
+    gradIn = np.dot(inputVec.T, gradPred)
 
     return cost, gradIn, gradOut
 
@@ -277,12 +303,12 @@ def test_word2vec():
     #     dummy_vectors
     # )
 
-    # print("\n==== Gradient check for CBOW      ====")
-    # gradcheck_naive(
-    #     lambda vec: word2vec_sgd_wrapper(
-    #         cbow, dummy_tokens, vec, dataset, 5, softmaxCostAndGradient),
-    #     dummy_vectors
-    # )
+    print("\n==== Gradient check for CBOW      ====")
+    gradcheck_naive(
+        lambda vec: word2vec_sgd_wrapper(
+            cbow, dummy_tokens, vec, dataset, 5, softmaxCostAndGradient),
+        dummy_vectors
+    )
     # gradcheck_naive(
     #     lambda vec: word2vec_sgd_wrapper(
     #         cbow, dummy_tokens, vec, dataset, 5, negSamplingCostAndGradient),
@@ -295,8 +321,8 @@ def test_word2vec():
     # print(skipgram("c", 1, ["a", "b"],
     #                dummy_tokens, dummy_vectors[:5, :], dummy_vectors[5:, :], dataset,
     #                negSamplingCostAndGradient))
-    # print(cbow("a", 2, ["a", "b", "c", "a"],
-    #            dummy_tokens, dummy_vectors[:5, :], dummy_vectors[5:, :], dataset))
+    print(cbow("a", 2, ["a", "b", "c", "a"],
+               dummy_tokens, dummy_vectors[:5, :], dummy_vectors[5:, :], dataset))
     # print(cbow("a", 2, ["a", "b", "a", "c"],
     #            dummy_tokens, dummy_vectors[:5, :], dummy_vectors[5:, :], dataset,
     #            negSamplingCostAndGradient))
