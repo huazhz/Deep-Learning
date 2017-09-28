@@ -188,7 +188,7 @@ def skipgram(currentWord, C, contextWords, tokens, inputVectors, outputVectors,
     # [1,n]
     predicted = np.dot(currentVec, inputVectors)
     gradPred = np.zeros(predicted.shape)
-    for i in range(2 * C):
+    for i in range(len(contextWords)):
         target_i = contextWordsIndices[i]
         cost_i, gradPred_i, grad_i = \
             word2vecCostAndGradient(predicted=predicted, target=target_i,
