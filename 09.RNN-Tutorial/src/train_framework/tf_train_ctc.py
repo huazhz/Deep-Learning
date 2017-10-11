@@ -148,6 +148,7 @@ class Tf_train_ctc(object):
         # this restricts GPU usage to the inverse of self.simultaneous_users_count
         self.simultaneous_users_count = parser.getint(config_header, 'simultaneous_users_count')
 
+    # 设置各种文件路径（模型保存路径等）
     def set_up_directories(self, model_name):
         # Set up model directory
         self.model_dir = os.path.join(get_model_dir(), self.model_dir)
@@ -218,6 +219,7 @@ class Tf_train_ctc(object):
             self.setup_summary_statistics()
 
             # create the configuration for the session
+            # GPU相关的设置
             tf_config = tf.ConfigProto()
             tf_config.allow_soft_placement = True
             tf_config.gpu_options.per_process_gpu_memory_fraction = \
@@ -333,6 +335,7 @@ class Tf_train_ctc(object):
             else:
                 logging.warning("Invalid beam search decoder option selected!")
 
+    # 一些summary
     def setup_summary_statistics(self):
         # Create a placholder for the summary statistics
         with tf.name_scope("accuracy"):

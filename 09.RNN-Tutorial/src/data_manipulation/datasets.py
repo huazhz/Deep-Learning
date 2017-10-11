@@ -67,9 +67,6 @@ class DataSet:
     This class has been modified from Mozilla DeepSpeech:
     https://github.com/mozilla/DeepSpeech/blob/master/util/importers/librivox.py
 
-    # This Source Code Form is subject to the terms of the Mozilla Public
-    # License, v. 2.0. If a copy of the MPL was not distributed with this
-    # file, You can obtain one at http://mozilla.org/MPL/2.0/.
     '''
 
     def __init__(self, txt_files, thread_count, batch_size, numcep, numcontext):
