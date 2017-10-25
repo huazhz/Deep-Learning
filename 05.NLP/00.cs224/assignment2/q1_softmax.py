@@ -22,9 +22,14 @@ def softmax(x):
         out: tf.Tensor with shape (n_sample, n_features). You need to construct this
                   tensor in this problem.
     """
+    # 必须要有keep_dims, 否则broadcast无法进行
+    x_max = tf.reduce_max(x, axis=1, keep_dims=True)
+    x_shift = x - x_max
 
-    ### YOUR CODE HERE
-    ### END YOUR CODE
+    x_exp = tf.exp(x_shift)
+    x_sum = tf.reduce_sum(x_exp, axis=1)
+    out = x_exp / x_sum
+    # out = tf.nn.softmax(x)
 
     return out
 
@@ -46,18 +51,18 @@ def cross_entropy_loss(y, yhat):
 
     Args:
         y:    tf.Tensor with shape (n_samples, n_classes). One-hot encoded.
-        yhat: tf.Tensorwith shape (n_sample, n_classes). Each row encodes a
+        yhat(softmax result): tf.Tensor with shape (n_sample, n_classes). Each row encodes a
                     probability distribution and should sum to 1.
     Returns:
         out:  tf.Tensor with shape (1,) (Scalar output). You need to construct this
                     tensor in the problem.
     """
 
-    ### YOUR CODE HERE
-    ### END YOUR CODE
+    result = tf.to_float(y) * yhat
+    yhatMax = tf.reduce_max(result, axis=1)
+    out = - tf.reduce_sum(tf.log(yhatMax))
 
     return out
-
 
 def test_softmax_basic():
     """
@@ -67,16 +72,16 @@ def test_softmax_basic():
 
     test1 = softmax(tf.constant(np.array([[1001, 1002], [3, 4]]), dtype=tf.float32))
     with tf.Session() as sess:
-            test1 = sess.run(test1)
-    test_all_close("Softmax test 1", test1, np.array([[0.26894142,  0.73105858],
-                                                      [0.26894142,  0.73105858]]))
+        test1 = sess.run(test1)
+    test_all_close("Softmax test 1", test1, np.array([[0.26894142, 0.73105858],
+                                                      [0.26894142, 0.73105858]]))
 
     test2 = softmax(tf.constant(np.array([[-1001, -1002]]), dtype=tf.float32))
     with tf.Session() as sess:
-            test2 = sess.run(test2)
+        test2 = sess.run(test2)
     test_all_close("Softmax test 2", test2, np.array([[0.73105858, 0.26894142]]))
 
-    print "Basic (non-exhaustive) softmax tests pass\n"
+    print("Basic (non-exhaustive) softmax tests pass\n")
 
 
 def test_cross_entropy_loss_basic():
@@ -88,14 +93,15 @@ def test_cross_entropy_loss_basic():
     yhat = np.array([[.5, .5], [.5, .5], [.5, .5]])
 
     test1 = cross_entropy_loss(
-            tf.constant(y, dtype=tf.int32),
-            tf.constant(yhat, dtype=tf.float32))
+        tf.constant(y, dtype=tf.int32),
+        tf.constant(yhat, dtype=tf.float32))
     with tf.Session() as sess:
         test1 = sess.run(test1)
     expected = -3 * np.log(.5)
     test_all_close("Cross-entropy test 1", test1, expected)
 
-    print "Basic (non-exhaustive) cross-entropy tests pass"
+    print("Basic (non-exhaustive) cross-entropy tests pass")
+
 
 if __name__ == "__main__":
     test_softmax_basic()
