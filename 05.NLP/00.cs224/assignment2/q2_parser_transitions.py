@@ -18,10 +18,13 @@ class PartialParse(object):
                       Your code should not modify the sentence.
         """
         # The sentence being parsed is kept for bookkeeping purposes. Do not use it in your code.
-        self.sentence = sentence
 
-        ### YOUR CODE HERE
-        ### END YOUR CODE
+        self.stack = []
+        self.buffer = sentence.copy()
+        self.dependencies = []
+
+        self.stack.append("ROOT")
+
 
     def parse_step(self, transition):
         """Performs a single parse step by applying the given transition to this partial parse
@@ -30,8 +33,19 @@ class PartialParse(object):
             transition: A string that equals "S", "LA", or "RA" representing the shift, left-arc,
                         and right-arc transitions.
         """
-        ### YOUR CODE HERE
-        ### END YOUR CODE
+        if transition == "S":
+            self.stack.append(self.buffer.pop(0))
+        elif transition == "LA":
+            head = self.stack[-1]
+            dependent = self.stack.pop(-2)
+            d = (head, dependent)
+            self.dependencies.append(d)
+        else:
+            head = self.stack[-2]
+            dependent = self.stack.pop(-1)
+            d = (head, dependent)
+            self.dependencies.append(d)
+
 
     def parse(self, transitions):
         """Applies the provided transitions to this PartialParse
@@ -84,8 +98,7 @@ def test_step(name, transition, stack, buf, deps,
         "{:} test resulted in buffer {:}, expected {:}".format(name, buf, ex_buf)
     assert deps == ex_deps, \
         "{:} test resulted in dependency list {:}, expected {:}".format(name, deps, ex_deps)
-    print "{:} test passed!".format(name)
-
+    print("{:} test passed!".format(name))
 
 def test_parse_step():
     """Simple tests for the PartialParse.parse_step function
@@ -97,7 +110,6 @@ def test_parse_step():
               ("ROOT", "cat",), ("sat",), (("cat", "the"),))
     test_step("RIGHT-ARC", "RA", ["ROOT", "run", "fast"], [], [],
               ("ROOT", "run",), (), (("run", "fast"),))
-
 
 def test_parse():
     """Simple tests for the PartialParse.parse function
@@ -111,7 +123,7 @@ def test_parse():
         "parse test resulted in dependencies {:}, expected {:}".format(dependencies, expected)
     assert tuple(sentence) == ("parse", "this", "sentence"), \
         "parse test failed: the input sentence should not be modified"
-    print "parse test passed!"
+    print("parse test passed!")
 
 
 class DummyModel:
@@ -148,7 +160,7 @@ def test_minibatch_parse():
                       (('only', 'ROOT'), ('only', 'arcs'), ('only', 'left')))
     test_dependencies("minibatch_parse", deps[3],
                       (('again', 'ROOT'), ('again', 'arcs'), ('again', 'left'), ('again', 'only')))
-    print "minibatch_parse test passed!"
+    print("minibatch_parse test passed!")
 
 if __name__ == '__main__':
     test_parse_step()
