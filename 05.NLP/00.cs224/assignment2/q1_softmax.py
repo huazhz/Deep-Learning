@@ -27,7 +27,7 @@ def softmax(x):
     x_shift = x - x_max
 
     x_exp = tf.exp(x_shift)
-    x_sum = tf.reduce_sum(x_exp, axis=1)
+    x_sum = tf.reduce_sum(x_exp, axis=1, keep_dims=True)
     out = x_exp / x_sum
     # out = tf.nn.softmax(x)
 
