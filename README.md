@@ -12,35 +12,26 @@
 ## 04.tensorflow-mnist-tutorial
 > TensorFlow的mnist教程
 
-## 05.cs224
-> 斯坦福自然语言处理
-
-## 06.NLP
+## 05.NLP
 > 自然语言处理相关资源
 
-## 07.Caffe
+## 06.Caffe
 > Caffe简单学习
 
-## eeg
-> Deep Learning for eeg classification
-
-## models
-> TensorFlow中的各种模型，很好的学习资源
-
-## neural-style
-
-## object_detection
+## 07.object_detection
 > 物体检测相关研究
 
-## papers
-> 深度学习论文
+## 08.resnet_cifar10
+> resnet分类cifar10代码
+
+## 09.RNN-Tutorial
+> rnn在语音识别上的应用
+
+## 10.speech-recognition
+> 语音识别的一些资源
+
+## models
+> tensorflow model zoo
 
 ## res
 > 深度学习一些有用的资源
-
-+ cnn
-+ rnn
-+ media
-
-## resnet_cifar10
-> 残差网络在cifar-10上分类
