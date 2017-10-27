@@ -1,3 +1,5 @@
+import numpy as np
+
 class PartialParse(object):
     def __init__(self, sentence):
         """Initializes this partial parse.
@@ -25,7 +27,6 @@ class PartialParse(object):
 
         self.stack.append("ROOT")
 
-
     def parse_step(self, transition):
         """Performs a single parse step by applying the given transition to this partial parse
 
@@ -33,6 +34,10 @@ class PartialParse(object):
             transition: A string that equals "S", "LA", or "RA" representing the shift, left-arc,
                         and right-arc transitions.
         """
+        # 栈空了，代表整个句子parse完成
+        if not self.stack:
+            return
+
         if transition == "S":
             self.stack.append(self.buffer.pop(0))
         elif transition == "LA":
@@ -45,7 +50,6 @@ class PartialParse(object):
             dependent = self.stack.pop(-1)
             d = (head, dependent)
             self.dependencies.append(d)
-
 
     def parse(self, transitions):
         """Applies the provided transitions to this PartialParse
@@ -77,9 +81,47 @@ def minibatch_parse(sentences, model, batch_size):
                       Ordering should be the same as in sentences (i.e., dependencies[i] should
                       contain the parse for sentences[i]).
     """
+    dependencies = []
+    partial_parses = []
+    unfinished_step = []  # 每个句子要parse多少步
+    # 一些初始化操作
+    for i in range(len(sentences)):
+        partial_parses.append(PartialParse(sentences[i]))
+        unfinished_step.append(2 * len(sentences[i]))
 
-    ### YOUR CODE HERE
-    ### END YOUR CODE
+    unfinished_parses = partial_parses.copy()
+    while unfinished_parses:
+        # 确定当前使用多少个parse作为一个batch
+        count = len(unfinished_parses)
+        currentParsesNum = batch_size
+        if count < batch_size:  # 如果未完成的parse数量比一个batch的少
+            currentParsesNum = count
+
+        maxStep = max(unfinished_step[:currentParsesNum])   # 当前batch的parser中，最大的那个step
+        currentParses = unfinished_parses[:currentParsesNum]    # 当前batch中所有的parser
+
+        # 对于当前batch，model.predict()共要执行maxStep次，只不过每次传入的参数不一样
+        # 如果一个parser解析完了，就不要把它传进去了
+        for s in range(maxStep):
+            a = np.array(unfinished_step[:currentParsesNum])
+            completeIndex = np.where(a==0)[0]
+            incompleteIndex = np.where(a>0)[0]
+
+            # 把已经parse完的parser去掉
+            for p in range(len(completeIndex)):
+                currentParses.pop(completeIndex[p])
+
+            # 这时transition数和incompleteIndex的长度相同
+            transitions = model.predict(currentParses)
+
+            for j in range(len(incompleteIndex)):
+                unfinished_parses[incompleteIndex[j]].parse_step(transitions[j])
+                unfinished_step[j] -= 1
+
+        for i in range(currentParsesNum):
+            parser = unfinished_parses.pop(0)
+            dependencies.append(parser.dependencies)
+            unfinished_step.pop(0)
 
     return dependencies
 
@@ -100,6 +142,7 @@ def test_step(name, transition, stack, buf, deps,
         "{:} test resulted in dependency list {:}, expected {:}".format(name, deps, ex_deps)
     print("{:} test passed!".format(name))
 
+
 def test_parse_step():
     """Simple tests for the PartialParse.parse_step function
     Warning: these are not exhaustive
@@ -111,6 +154,7 @@ def test_parse_step():
     test_step("RIGHT-ARC", "RA", ["ROOT", "run", "fast"], [], [],
               ("ROOT", "run",), (), (("run", "fast"),))
 
+
 def test_parse():
     """Simple tests for the PartialParse.parse function
     Warning: these are not exhaustive
@@ -119,7 +163,7 @@ def test_parse():
     dependencies = PartialParse(sentence).parse(["S", "S", "S", "LA", "RA", "RA"])
     dependencies = tuple(sorted(dependencies))
     expected = (('ROOT', 'parse'), ('parse', 'sentence'), ('sentence', 'this'))
-    assert dependencies == expected,  \
+    assert dependencies == expected, \
         "parse test resulted in dependencies {:}, expected {:}".format(dependencies, expected)
     assert tuple(sentence) == ("parse", "this", "sentence"), \
         "parse test failed: the input sentence should not be modified"
@@ -131,9 +175,11 @@ class DummyModel:
     First shifts everything onto the stack and then does exclusively right arcs if the first word of
     the sentence is "right", "left" if otherwise.
     """
+
     def predict(self, partial_parses):
-        return [("RA" if pp.stack[1] is "right" else "LA") if len(pp.buffer) == 0 else "S"
-                for pp in partial_parses]
+        trainsitions = [("RA" if pp.stack[1] is "right" else "LA") if len(pp.buffer) == 0 else "S"
+                        for pp in partial_parses]
+        return trainsitions
 
 
 def test_dependencies(name, deps, ex_deps):
@@ -161,6 +207,7 @@ def test_minibatch_parse():
     test_dependencies("minibatch_parse", deps[3],
                       (('again', 'ROOT'), ('again', 'arcs'), ('again', 'left'), ('again', 'only')))
     print("minibatch_parse test passed!")
+
 
 if __name__ == '__main__':
     test_parse_step()
