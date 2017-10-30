@@ -22,7 +22,7 @@ class Config(object):
     embed_size = 50
     hidden_size = 200
     batch_size = 2048
-    n_epochs = 10
+    n_epochs = 100
     lr = 0.001
 
 
@@ -99,7 +99,7 @@ class ParserModel(Model):
         Returns:
             embeddings: tf.Tensor of shape (None, n_features*embed_size)
         """
-        pre_embed = tf.Variable(initial_value=self.pretrained_embeddings, trainable=False)
+        pre_embed = tf.Variable(initial_value=self.pretrained_embeddings)
         embeddings = tf.nn.embedding_lookup(params=pre_embed, ids=self.input_placeholder)
         embeddings = tf.reshape(embeddings, [-1, self.config.n_features*self.config.embed_size])
 
@@ -182,7 +182,7 @@ class ParserModel(Model):
             train_op: The Op for training.
         """
 
-        optimizer = tf.train.AdadeltaOptimizer()
+        optimizer = tf.train.AdamOptimizer(learning_rate=0.1)
         train_op = optimizer.minimize(loss)
 
         return train_op
@@ -263,7 +263,7 @@ def main(debug=False):
                 UAS, dependencies = parser.parse(test_set)
                 print("- test UAS: {:.2f}".format(UAS * 100.0))
                 print("Writing predictions")
-                with open('q2_test.predicted.pkl', 'w') as f:
+                with open('q2_test.predicted.pkl', 'wb') as f:
                     pickle.dump(dependencies, f, -1)
                 print("Done!")
 
