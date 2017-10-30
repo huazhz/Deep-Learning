@@ -37,7 +37,7 @@ def test_initialization_basic():
     """
     print("Running basic tests...")
     xavier_initializer = xavier_weight_init()
-    shape = (1,)
+    shape = [1,]
     xavier_mat = xavier_initializer(shape)
     assert xavier_mat.get_shape() == shape
 

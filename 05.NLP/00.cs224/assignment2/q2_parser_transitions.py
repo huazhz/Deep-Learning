@@ -1,5 +1,6 @@
 import numpy as np
 
+
 class PartialParse(object):
     def __init__(self, sentence):
         """Initializes this partial parse.
@@ -20,7 +21,7 @@ class PartialParse(object):
                       Your code should not modify the sentence.
         """
         # The sentence being parsed is kept for bookkeeping purposes. Do not use it in your code.
-
+        self.sentence = sentence
         self.stack = []
         self.buffer = sentence.copy()
         self.dependencies = []
@@ -45,11 +46,17 @@ class PartialParse(object):
             dependent = self.stack.pop(-2)
             d = (head, dependent)
             self.dependencies.append(d)
-        else:
+
+            if not self.buffer and len(self.stack) == 1:
+                self.stack.clear()
+        elif transition == 'RA':
             head = self.stack[-2]
             dependent = self.stack.pop(-1)
             d = (head, dependent)
             self.dependencies.append(d)
+
+            if not self.buffer and len(self.stack) == 1:
+                self.stack.clear()
 
     def parse(self, transitions):
         """Applies the provided transitions to this PartialParse
@@ -97,26 +104,31 @@ def minibatch_parse(sentences, model, batch_size):
         if count < batch_size:  # 如果未完成的parse数量比一个batch的少
             currentParsesNum = count
 
-        maxStep = max(unfinished_step[:currentParsesNum])   # 当前batch的parser中，最大的那个step
-        currentParses = unfinished_parses[:currentParsesNum]    # 当前batch中所有的parser
+        maxStep = max(unfinished_step[:currentParsesNum])  # 当前batch的parser中，最大的那个step
 
         # 对于当前batch，model.predict()共要执行maxStep次，只不过每次传入的参数不一样
         # 如果一个parser解析完了，就不要把它传进去了
         for s in range(maxStep):
-            a = np.array(unfinished_step[:currentParsesNum])
-            completeIndex = np.where(a==0)[0]
-            incompleteIndex = np.where(a>0)[0]
+            currentParses = unfinished_parses[:currentParsesNum]  # 当前batch中所有的parser
 
-            # 把已经parse完的parser去掉
+            a = np.array(unfinished_step[:currentParsesNum])
+            completeIndex = np.where(a <= 0)[0]
+            incompleteIndex = np.where(a > 0)[0]
+
+            # 把已经parse完的parser去掉, 注意，这个currentParses在maxStep次循环中，每次都是从currentParsesNum
+            # 个parser开始的，然后这个for循环把之前所有已完成的parser都pop出去
             for p in range(len(completeIndex)):
-                currentParses.pop(completeIndex[p])
+                # 减去p的原因是每次pop操作之后，list中元素减少一个
+                # p次pop操作之后, 原来下标减去p-1才是相对于现在的下标
+                currentParses.pop(completeIndex[p]-p)
+                unfinished_step[completeIndex[p]] -= 1
 
             # 这时transition数和incompleteIndex的长度相同
             transitions = model.predict(currentParses)
 
             for j in range(len(incompleteIndex)):
                 unfinished_parses[incompleteIndex[j]].parse_step(transitions[j])
-                unfinished_step[j] -= 1
+                unfinished_step[incompleteIndex[j]] -= 1
 
         for i in range(currentParsesNum):
             parser = unfinished_parses.pop(0)

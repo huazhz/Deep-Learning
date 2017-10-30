@@ -10,9 +10,21 @@
 		# 正确代码：
 		x_sum = tf.reduce_sum(x_exp, axis=1, keep_dims=True)
 	```
+
 2. 提示类型不一致，通常是在定义变量的时候没有指定好类型
 
 	```
 		# np定义数组的时候就指定astype
 		b = tf.Variable(np.zeros([1, self.config.n_classes]).astype(np.float32), name='biases')
+	```
+
+3. tf.reshape(x, shape), 这个shape不能是`[None, ...]`的形式，可以写成`[-1, ...]`, 维数必须是可以明确计算的
+
+4. tensorflow定义一个数，`shape=[]`，如果弄成1维的，会有如下提示：
+	```
+		ValueError: Shapes (1,) and () are incompatible
+	```
+
+	```
+		self.dropout_placeholder = tf.placeholder(tf.float32, shape=[])
 	```

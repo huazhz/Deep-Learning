@@ -74,16 +74,11 @@ class SoftmaxModel(Model):
         Returns:
             feed_dict: The feed dictionary mapping from placeholders to values.
         """
-        feed_dict = {}
-        if labels_batch is None:
-            feed_dict = {
-                self.input_placeholder: inputs_batch,
-            }
-        else:
-            feed_dict = {
-                self.input_placeholder: inputs_batch,
-                self.labels_placeholder: labels_batch
-            }
+        feed_dict = {
+            self.input_placeholder: inputs_batch,
+        }
+        if labels_batch is not None:
+            feed_dict[self.labels_placeholder]=labels_batch
 
         return feed_dict
 
