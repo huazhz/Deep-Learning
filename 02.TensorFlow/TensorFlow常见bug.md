@@ -28,3 +28,15 @@
 	```
 		self.dropout_placeholder = tf.placeholder(tf.float32, shape=[])
 	```
+
+5. tensorflow中作为placeholder的索引值必须是int
+	```
+		images_placeholder: X_train[indices, :]
+
+		IndexError: arrays used as indices must be of integer (or boolean) type
+	```
+
+	```
+		indices = np.zeros([800])		# 错误
+		indices = np.zeros([800], dtype=np.int)		# 正确
+	```
