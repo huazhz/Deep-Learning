@@ -143,3 +143,17 @@
 
 - 线程、队列、异常处理等内容，目前用不上
 
+### 1700_ReadingData
+
+- demo1
+
+- demo2_DatasetAPI
+
+    dataset api 一些demo
+    
+- demo3_batch
+
+    1. tf.train.shuffle_batch
+    2. tf.train.batch
+
+
