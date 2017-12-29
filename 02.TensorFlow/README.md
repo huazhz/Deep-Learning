@@ -155,5 +155,11 @@
 
     1. tf.train.shuffle_batch
     2. tf.train.batch
+    
+### 2100_Losses
+
+- demo1: 利用Tensorflow Collection保存loss
+
+- demo2: tf.losses.add_loss、tf.get_collection(tf.GraphKeys.LOSSES)
 
 
